@@ -1,11 +1,22 @@
-<div align="center">
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+# 🧠 EscolarApp — Central de Governança Escolar
 
-  <h1>Built with AI Studio</h2>
+Este projeto é o esqueleto completo de um ecossistema digital para gestão educacional pública ou privada de grande porte.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 🎯 Visão do Sistema
+Diferente de sistemas de notas comuns, o EscolarApp é uma **Central de Operação**. Ele prioriza a conformidade legal, a segurança dos dados (LGPD) e o apoio à decisão baseada em dados (IA).
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## 📂 Organização de Pastas
+- `/components`: Componentes globais (Sidebar, Layout, UI base).
+- `/pages`: Módulos funcionais (16 módulos conforme brainstorm).
+- `/services`: Simulação de APIs e lógica de negócio.
+- `/types`: Definições de interfaces TypeScript para o domínio escolar.
+- `/mocks`: Constantes de dados para prototipação.
 
-</div>
+## 🛠️ Pilares de Evolução
+1. **Segurança**: Implementar logs de auditoria em cada ação da Secretaria.
+2. **Integração**: Preparado para conexões com gov.br e Diários Oficiais via placeholders.
+3. **IA**: Módulo de Inteligência configurado para predição de evasão (mimetizado em mocks).
+
+## 🚀 Como usar
+Navegue pelos módulos usando a Sidebar (Desktop) ou Menu Inferior (Mobile). Cada página demonstra um estado funcional com dados simulados.
