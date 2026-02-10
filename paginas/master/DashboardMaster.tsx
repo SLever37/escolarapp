@@ -1,42 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Building2, Users, Plus, ShieldCheck, Globe, 
-  Search, MoreVertical, LayoutGrid, CheckCircle2, 
-  UserPlus, ExternalLink, Activity, Database, X
+  Search, MoreVertical, CheckCircle2, 
+  UserPlus, ExternalLink, Activity, Database
 } from 'lucide-react';
-import { bd } from '../../servicos/bancoDeDados';
-import { UnidadeEscolar } from '../../tipos';
 
 const DashboardMaster = () => {
-  const [unidades, setUnidades] = useState<UnidadeEscolar[]>([]);
-  const [novaUnidadeNome, setNovaUnidadeNome] = useState('');
-  const [gestorEmail, setGestorEmail] = useState('');
-  const [gestorNome, setGestorNome] = useState('');
-  const [unidadeSelecionada, setUnidadeSelecionada] = useState('');
-
-  useEffect(() => {
-    setUnidades(bd.getUnidades());
-  }, []);
-
-  const handleCriarUnidade = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!novaUnidadeNome.trim()) return;
-    bd.adicionarUnidade(novaUnidadeNome);
-    setUnidades(bd.getUnidades());
-    setNovaUnidadeNome('');
-    alert('Unidade provisionada com sucesso!');
-  };
-
-  const handleVincularGestor = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!unidadeSelecionada || !gestorNome) return;
-    bd.adicionarUsuario(gestorNome, 'gestor', unidadeSelecionada);
-    setUnidades(bd.getUnidades());
-    setGestorNome('');
-    setGestorEmail('');
-    alert(`Acesso de Gestor criado para ${gestorNome}`);
-  };
+  const [unidades] = useState([
+    { id: '1', nome: 'E.M. Presidente Vargas', gestor: 'Dr. Roberto Magalhães', status: 'ativo', alunos: 1240 },
+    { id: '2', nome: 'C.E. Arco-Íris', gestor: 'Profa. Helena Souza', status: 'ativo', alunos: 210 },
+  ]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -44,23 +18,24 @@ const DashboardMaster = () => {
         <div>
           <div className="flex items-center gap-2 text-indigo-600 mb-2">
             <Globe size={24} />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Master Platform Admin</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Ecossistema EscolarApp</span>
           </div>
-          <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Gestão de Ecossistema</h2>
-          <p className="text-slate-500 text-sm mt-1 font-medium">Controle global de instituições, provisionamento de unidades e segurança de rede.</p>
+          <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Administração de Plataforma</h2>
+          <p className="text-slate-500 text-sm mt-1 font-medium">Provisionamento de unidades, controle de instâncias e auditoria global.</p>
         </div>
+        <button className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2">
+          <Plus size={18} /> Provisionar Unidade
+        </button>
       </header>
 
-      {/* KPIs da Plataforma */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <KPICardMaster label="Unidades Providas" valor={unidades.length} icone={<Building2 />} cor="indigo" />
         <KPICardMaster label="Usuários em Rede" valor="4.850" icone={<Users />} cor="blue" />
         <KPICardMaster label="Uptime Servidores" valor="99.9%" icone={<Activity />} cor="emerald" />
-        <KPICardMaster label="Segurança Core" valor="Ativa" icone={<ShieldCheck />} cor="blue" />
+        <KPICardMaster label="Status Backups" valor="Seguro" icone={<Database />} cor="blue" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Listagem de Unidades Providas */}
         <div className="lg:col-span-8 bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Instâncias Ativas</h3>
@@ -79,14 +54,14 @@ const DashboardMaster = () => {
                   </div>
                   <div>
                     <h4 className="text-lg font-black text-slate-800 leading-none">{u.nome}</h4>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-2">Gestor: <span className={u.gestorNome === 'Pendente' ? 'text-rose-500' : 'text-indigo-600'}>{u.gestorNome}</span></p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-2">Gestor: {u.gestor}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                    <span className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-xl text-[9px] font-black border border-emerald-100 flex items-center gap-2">
                      <CheckCircle2 size={12} /> ATIVA
                    </span>
-                   <button className="p-3 text-slate-300 hover:text-blue-600 transition-all"><ExternalLink size={18} /></button>
+                   <button className="p-3 text-slate-300 hover:text-blue-600 transition-all" title="Acessar Painel da Unidade"><ExternalLink size={18} /></button>
                    <button className="p-3 text-slate-300 hover:text-slate-600"><MoreVertical size={18} /></button>
                 </div>
               </div>
@@ -94,62 +69,21 @@ const DashboardMaster = () => {
           </div>
         </div>
 
-        {/* Cadastro de Unidade e Gestor */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm">
-            <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6">Nova Unidade</h4>
-            <form onSubmit={handleCriarUnidade} className="space-y-4">
-               <input 
-                 value={novaUnidadeNome}
-                 onChange={e => setNovaUnidadeNome(e.target.value)}
-                 placeholder="Nome da Escola / Unidade" 
-                 className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl text-xs font-bold outline-none focus:border-indigo-500 transition-all" 
-               />
-               <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
-                 <Plus size={16} /> Provisionar Unidade
-               </button>
-            </form>
-          </div>
-
           <div className="bg-slate-900 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
             <div className="absolute right-[-10%] top-[-10%] opacity-10 group-hover:scale-110 transition-transform duration-700">
                <UserPlus size={200} />
             </div>
             <h4 className="text-xl font-black leading-tight mb-2">Vincular Gestor</h4>
-            <p className="text-slate-400 text-xs font-medium leading-relaxed mb-8">Conceda autonomia total a um diretor institucional.</p>
-            
-            <form onSubmit={handleVincularGestor} className="space-y-4 mb-8">
-               <input 
-                 value={gestorNome}
-                 onChange={e => setGestorNome(e.target.value)}
-                 placeholder="Nome Completo do Gestor" 
-                 className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-xs font-bold outline-none focus:border-blue-500" 
-               />
-               <input 
-                 value={gestorEmail}
-                 onChange={e => setGestorEmail(e.target.value)}
-                 placeholder="E-mail Institucional" 
-                 className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-xs font-bold outline-none focus:border-blue-500" 
-               />
-               <select 
-                 value={unidadeSelecionada}
-                 onChange={e => setUnidadeSelecionada(e.target.value)}
-                 className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-xs font-bold outline-none text-slate-400 cursor-pointer"
-               >
-                 <option value="" className="bg-slate-900">Selecionar Unidade...</option>
-                 {unidades.map(u => <option key={u.id} value={u.nome} className="bg-slate-900">{u.nome}</option>)}
+            <p className="text-slate-400 text-xs font-medium leading-relaxed mb-8">Crie o acesso master do diretor de uma unidade. Ele terá autonomia total para criar os usuários da escola dele.</p>
+            <div className="space-y-4 mb-8">
+               <input placeholder="E-mail do Gestor" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-blue-500" />
+               <select className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm outline-none text-slate-400">
+                 <option>Selecionar Unidade...</option>
+                 {unidades.map(u => <option key={u.id}>{u.nome}</option>)}
                </select>
-               
-               <button type="submit" className="w-full bg-indigo-600 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-900/40">
-                 GERAR CREDENCIAIS MASTER
-               </button>
-            </form>
-            
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest leading-relaxed">
-                Nota: O gestor receberá as instruções de acesso e chaves de criptografia via e-mail institucional.
-              </p>
             </div>
+            <button className="w-full bg-indigo-600 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all">CONCEDER ACESSO MASTER</button>
           </div>
         </div>
       </div>

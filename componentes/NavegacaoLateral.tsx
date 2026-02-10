@@ -3,9 +3,10 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, Users, UserSquare2, Library, Package, 
-  GraduationCap, Building2, FileText, Database, Globe,
-  ShieldCheck, LogOut, Search, BrainCircuit, Gavel
+  LayoutDashboard, Users, UserSquare2, 
+  GraduationCap, FileText, Database, Globe,
+  ShieldCheck, LogOut, BrainCircuit, KeyRound,
+  ClipboardList, School
 } from 'lucide-react';
 import { Usuario } from '../tipos';
 import { podeAcessar } from '../servicos/permissoesService';
@@ -30,6 +31,7 @@ const NavegacaoLateral: React.FC<SidebarProps> = ({ usuario, aoSair }) => {
 
   const LinkMenu = ({ para, icone, label, modulo }: any) => {
     const ativo = location.pathname === para;
+<<<<<<< HEAD
     const [permitido, setPermitido] = useState<boolean | null>(null);
 
     useEffect(() => {
@@ -50,6 +52,11 @@ const NavegacaoLateral: React.FC<SidebarProps> = ({ usuario, aoSair }) => {
 
     if (permitido === null) return null; // evita flicker
     if (!permitido) return null;
+=======
+    
+    // Verifica permissão no serviço de governança
+    if (!temPermissao(usuario, modulo, 'ver')) return null;
+>>>>>>> a0ebce0f375dc629d45047f871c06d7c8283478e
 
     return (
       <Link 
@@ -64,7 +71,7 @@ const NavegacaoLateral: React.FC<SidebarProps> = ({ usuario, aoSair }) => {
   };
 
   return (
-    <aside className="w-72 bg-[#1e3a8a] text-white flex flex-col h-full shrink-0">
+    <aside className="w-72 bg-[#1e3a8a] text-white flex flex-col h-full shrink-0 transition-all duration-300">
       <div className="p-8 border-b border-blue-800/50 flex items-center gap-4">
         <div className="bg-white p-2 rounded-2xl shadow-lg">
           <GraduationCap className="text-[#1e3a8a]" size={28} />
@@ -76,27 +83,61 @@ const NavegacaoLateral: React.FC<SidebarProps> = ({ usuario, aoSair }) => {
       </div>
 
       <nav className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
-        {usuario.papel === 'admin_plataforma' ? (
+        
+        {/* NÍVEL 0: MASTER */}
+        {usuario.papel === 'admin_plataforma' && (
           <div className="space-y-1">
             <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Painel Master</h3>
             <LinkMenu para="/" icone={<Globe />} label="Ecossistema" modulo="painel_estrategico" />
             <LinkMenu para="/backup" icone={<Database />} label="Servidores" modulo="backup_institucional" />
-            <LinkMenu para="/auditoria" icone={<ShieldCheck />} label="Auditoria" modulo="auditoria_forense" />
+            <LinkMenu para="/auditoria" icone={<ShieldCheck />} label="Auditoria Global" modulo="auditoria_forense" />
           </div>
-        ) : (
+        )}
+
+        {/* NÍVEL 1: GESTOR (Vê tudo da unidade) */}
+        {usuario.papel === 'gestor' && (
           <>
             <div className="space-y-1">
               <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Estratégico</h3>
-              <LinkMenu para="/" icone={<LayoutDashboard />} label="Painel" modulo="painel_estrategico" />
-              <LinkMenu para="/secretaria" icone={<FileText />} label="Secretaria" modulo="secretaria_legal" />
+              <LinkMenu para="/" icone={<LayoutDashboard />} label="Torre de Controle" modulo="painel_estrategico" />
+              <LinkMenu para="/acessos" icone={<KeyRound />} label="Gestão de Acessos" modulo="painel_estrategico" />
             </div>
             <div className="space-y-1">
-              <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Pedagógico</h3>
-              <LinkMenu para="/pedagogia" icone={<BrainCircuit />} label="Núcleo Central" modulo="pedagogia_central" />
-              <LinkMenu para="/professor" icone={<UserSquare2 />} label="Meu Diário" modulo="diario_classe" />
+              <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Departamentos</h3>
+              <LinkMenu para="/pedagogia" icone={<BrainCircuit />} label="Pedagogia" modulo="pedagogia_central" />
+              <LinkMenu para="/secretaria" icone={<FileText />} label="Secretaria" modulo="secretaria_legal" />
+              <LinkMenu para="/portaria" icone={<School />} label="Portaria" modulo="portaria_acesso" />
             </div>
           </>
         )}
+
+        {/* NÍVEL 2: PEDAGOGIA */}
+        {usuario.papel === 'pedagogia' && (
+          <div className="space-y-1">
+            <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Coordenação</h3>
+            <LinkMenu para="/" icone={<BrainCircuit />} label="Painel Pedagógico" modulo="pedagogia_central" />
+            <LinkMenu para="/grade" icone={<ClipboardList />} label="Grade Horária" modulo="grade_horarios" />
+            <LinkMenu para="/diarios" icone={<UserSquare2 />} label="Supervisão Diários" modulo="diario_classe" />
+          </div>
+        )}
+
+        {/* NÍVEL 3: SECRETARIA */}
+        {usuario.papel === 'secretaria' && (
+          <div className="space-y-1">
+            <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Administrativo</h3>
+            <LinkMenu para="/" icone={<FileText />} label="Secretaria Digital" modulo="secretaria_legal" />
+            <LinkMenu para="/familia" icone={<Users />} label="Portal Família" modulo="portal_familia" />
+          </div>
+        )}
+
+        {/* NÍVEL 4: PROFESSOR */}
+        {usuario.papel === 'professor' && (
+          <div className="space-y-1">
+            <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Docência</h3>
+            <LinkMenu para="/" icone={<UserSquare2 />} label="Meu Diário" modulo="diario_classe" />
+          </div>
+        )}
+
       </nav>
 
       <div className="p-6 bg-blue-900/40 border-t border-blue-800">
@@ -104,7 +145,7 @@ const NavegacaoLateral: React.FC<SidebarProps> = ({ usuario, aoSair }) => {
           <img src={`https://ui-avatars.com/api/?name=${usuario.nome}&background=0D8ABC&color=fff`} className="w-10 h-10 rounded-xl border-2 border-blue-400" />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black truncate">{usuario.nome}</p>
-            <p className="text-[9px] opacity-60 uppercase font-bold">{usuario.papel.replace('_', ' ')}</p>
+            <p className="text-[9px] opacity-60 uppercase font-bold truncate">{usuario.papel.replace('_', ' ')}</p>
           </div>
           <button onClick={aoSair} className="text-blue-300 hover:text-white transition-colors"><LogOut size={16} /></button>
         </div>
