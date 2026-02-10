@@ -1,14 +1,8 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, UserSquare2, 
-  GraduationCap, FileText, Database, Globe,
-  ShieldCheck, LogOut, BrainCircuit, KeyRound,
-  ClipboardList, School
-} from 'lucide-react';
+import { GraduationCap, LogOut } from 'lucide-react';
 import { Usuario } from '../tipos';
-import { temPermissao } from '../servicos/governanca';
+import { obterMenuPorPerfil } from '../src/utils/menuConfig';
 
 interface SidebarProps {
   usuario: Usuario;
@@ -17,24 +11,7 @@ interface SidebarProps {
 
 const NavegacaoLateral: React.FC<SidebarProps> = ({ usuario, aoSair }) => {
   const location = useLocation();
-
-  const LinkMenu = ({ para, icone, label, modulo }: any) => {
-    const ativo = location.pathname === para;
-    
-    // Verifica permissão no serviço de governança
-    if (!temPermissao(usuario, modulo, 'ver')) return null;
-
-    return (
-      <Link 
-        to={para} 
-        className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all
-          ${ativo ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-blue-100/70 hover:bg-blue-800/40 hover:text-white'}`}
-      >
-        {React.cloneElement(icone, { size: 18 })}
-        <span className="truncate">{label}</span>
-      </Link>
-    );
-  };
+  const menu = obterMenuPorPerfil(usuario);
 
   return (
     <aside className="w-72 bg-[#1e3a8a] text-white flex flex-col h-full shrink-0 transition-all duration-300">
@@ -48,62 +25,22 @@ const NavegacaoLateral: React.FC<SidebarProps> = ({ usuario, aoSair }) => {
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
-        
-        {/* NÍVEL 0: MASTER */}
-        {usuario.papel === 'admin_plataforma' && (
-          <div className="space-y-1">
-            <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Painel Master</h3>
-            <LinkMenu para="/" icone={<Globe />} label="Ecossistema" modulo="painel_estrategico" />
-            <LinkMenu para="/backup" icone={<Database />} label="Servidores" modulo="backup_institucional" />
-            <LinkMenu para="/auditoria" icone={<ShieldCheck />} label="Auditoria Global" modulo="auditoria_forense" />
-          </div>
-        )}
-
-        {/* NÍVEL 1: GESTOR (Vê tudo da unidade) */}
-        {usuario.papel === 'gestor' && (
-          <>
-            <div className="space-y-1">
-              <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Estratégico</h3>
-              <LinkMenu para="/" icone={<LayoutDashboard />} label="Torre de Controle" modulo="painel_estrategico" />
-              <LinkMenu para="/acessos" icone={<KeyRound />} label="Gestão de Acessos" modulo="painel_estrategico" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Departamentos</h3>
-              <LinkMenu para="/pedagogia" icone={<BrainCircuit />} label="Pedagogia" modulo="pedagogia_central" />
-              <LinkMenu para="/secretaria" icone={<FileText />} label="Secretaria" modulo="secretaria_legal" />
-              <LinkMenu para="/portaria" icone={<School />} label="Portaria" modulo="portaria_acesso" />
-            </div>
-          </>
-        )}
-
-        {/* NÍVEL 2: PEDAGOGIA */}
-        {usuario.papel === 'pedagogia' && (
-          <div className="space-y-1">
-            <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Coordenação</h3>
-            <LinkMenu para="/" icone={<BrainCircuit />} label="Painel Pedagógico" modulo="pedagogia_central" />
-            <LinkMenu para="/grade" icone={<ClipboardList />} label="Grade Horária" modulo="grade_horarios" />
-            <LinkMenu para="/diarios" icone={<UserSquare2 />} label="Supervisão Diários" modulo="diario_classe" />
-          </div>
-        )}
-
-        {/* NÍVEL 3: SECRETARIA */}
-        {usuario.papel === 'secretaria' && (
-          <div className="space-y-1">
-            <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Administrativo</h3>
-            <LinkMenu para="/" icone={<FileText />} label="Secretaria Digital" modulo="secretaria_legal" />
-            <LinkMenu para="/familia" icone={<Users />} label="Portal Família" modulo="portal_familia" />
-          </div>
-        )}
-
-        {/* NÍVEL 4: PROFESSOR */}
-        {usuario.papel === 'professor' && (
-          <div className="space-y-1">
-            <h3 className="px-4 mb-4 text-[9px] font-black text-blue-300 opacity-50 uppercase tracking-[0.2em]">Docência</h3>
-            <LinkMenu para="/" icone={<UserSquare2 />} label="Meu Diário" modulo="diario_classe" />
-          </div>
-        )}
-
+      <nav className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+        {menu.map((item) => {
+          const Icone = item.icone;
+          const ativo = location.pathname === item.para;
+          return (
+            <Link
+              key={item.para}
+              to={item.para}
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all
+                ${ativo ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-blue-100/70 hover:bg-blue-800/40 hover:text-white'}`}
+            >
+              <Icone size={18} />
+              <span className="truncate">{item.label}</span>
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="p-6 bg-blue-900/40 border-t border-blue-800">

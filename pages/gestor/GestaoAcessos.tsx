@@ -1,133 +1,122 @@
+import React, { useMemo, useState } from 'react';
+import { UserPlus, KeyRound, ClipboardList, ShieldCheck } from 'lucide-react';
+import { PapelUsuario, Usuario } from '../../tipos';
+import { PRESETS_DELEGACAO, PresetDelegacao } from '../../src/utils/delegacoes';
 
-import React, { useState } from 'react';
-import { 
-  UserPlus, ShieldCheck, ShieldAlert, 
-  Search, MoreHorizontal, Filter, Clock, 
-  Eye, Edit3, Trash2, KeyRound, Users
-} from 'lucide-react';
-import { KpiCard, SectionHeader, AlertItem } from '../../components/DashboardUI';
+interface UsuarioMock extends Pick<Usuario, 'id' | 'nome' | 'papel' | 'delegacoes'> {}
 
-const GestaoAcessos = () => {
-  const [activeTab, setActiveTab] = useState('usuarios');
+const usuariosIniciais: UsuarioMock[] = [
+  { id: '1', nome: 'Sra. Maria Auxiliadora', papel: 'servicos_gerais', delegacoes: PRESETS_DELEGACAO.merendeira.delegacoes },
+  { id: '2', nome: 'Sr. Cláudio Rocha', papel: 'portaria', delegacoes: PRESETS_DELEGACAO.vigia_patrimonio.delegacoes },
+  { id: '3', nome: 'Joana Prado', papel: 'secretaria', delegacoes: [] },
+];
+
+const GestaoAcessos: React.FC = () => {
+  const [usuarios, setUsuarios] = useState<UsuarioMock[]>(usuariosIniciais);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [nome, setNome] = useState('');
+  const [papel, setPapel] = useState<PapelUsuario>('servicos_gerais');
+  const [preset, setPreset] = useState<PresetDelegacao>('merendeira');
+
+  const totalDelegacoes = useMemo(
+    () => usuarios.reduce((acc, usuario) => acc + usuario.delegacoes.length, 0),
+    [usuarios]
+  );
+
+  const criarUsuario = () => {
+    if (!nome.trim()) return;
+
+    const novo: UsuarioMock = {
+      id: `${Date.now()}`,
+      nome,
+      papel,
+      delegacoes: PRESETS_DELEGACAO[preset].delegacoes,
+    };
+
+    setUsuarios((atual) => [novo, ...atual]);
+    setLogs((atual) => [
+      `${new Date().toLocaleString('pt-BR')} — Usuário ${nome} criado com preset ${PRESETS_DELEGACAO[preset].nome}.`,
+      ...atual,
+    ]);
+    setNome('');
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">Gestão de Acessos & Delegação</h2>
-          <p className="text-slate-500 text-sm mt-1 font-medium">Controle de privilégios institucionais e conformidade de acesso.</p>
-        </div>
-        <button className="bg-slate-900 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl flex items-center gap-2 hover:bg-slate-800 transition-all">
-          <UserPlus size={18} /> Novo Usuário Delegado
-        </button>
+      <header>
+        <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">Gestão de Acessos</h2>
+        <p className="text-slate-500 text-sm mt-2 font-medium">Criar usuários e delegar funções por módulo com trilha de auditoria.</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-         <KpiCard title="Usuários Ativos" value="58" icon={<Users />} color="blue" />
-         <KpiCard title="Acessos Delegados" value="12" icon={<KeyRound />} color="violet" />
-         <KpiCard title="Tentativas de Bloqueio" value="03" icon={<ShieldAlert />} color="rose" />
-         <KpiCard title="Auditoria LGPD" value="OK" icon={<ShieldCheck />} color="emerald" />
-      </div>
+      <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Indicador titulo="Usuários" valor={`${usuarios.length}`} icone={<UserPlus size={18} />} />
+        <Indicador titulo="Delegações Ativas" valor={`${totalDelegacoes}`} icone={<KeyRound size={18} />} />
+        <Indicador titulo="Presets Oficiais" valor="3" icone={<ClipboardList size={18} />} />
+        <Indicador titulo="Status" valor="Conforme" icone={<ShieldCheck size={18} />} />
+      </section>
 
-      <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-50/30">
-           <div className="flex gap-1 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
-              {['Usuarios', 'Delegacoes', 'Seguranca'].map((tab) => (
-                <button 
-                  key={tab}
-                  onClick={() => setActiveTab(tab.toLowerCase())}
-                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.toLowerCase() ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-700'}`}
-                >
-                  {tab === 'Delegacoes' ? 'Delegações' : tab === 'Seguranca' ? 'Segurança' : 'Usuários'}
-                </button>
-              ))}
-           </div>
-           <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input type="text" placeholder="Buscar por nome ou cargo..." className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none w-80 shadow-sm focus:ring-2 focus:ring-blue-500 transition-all" />
-           </div>
+      <section className="bg-white rounded-[2rem] border border-slate-200 p-6 space-y-4">
+        <h3 className="text-lg font-black text-slate-800">Criar usuário e delegar função</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do usuário" className="px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" />
+          <select value={papel} onChange={(e) => setPapel(e.target.value as PapelUsuario)} className="px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium">
+            <option value="servicos_gerais">Serviços Gerais</option>
+            <option value="portaria">Vigia/Portaria</option>
+            <option value="secretaria">Secretaria</option>
+            <option value="pedagogia">Supervisão/Pedagogia</option>
+          </select>
+          <select value={preset} onChange={(e) => setPreset(e.target.value as PresetDelegacao)} className="px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium">
+            <option value="merendeira">Merendeira: Estoque da Cozinha</option>
+            <option value="vigia_patrimonio">Vigia: Patrimônio e Inventário</option>
+            <option value="bibliotecario">Bibliotecário: Biblioteca</option>
+          </select>
+          <button onClick={criarUsuario} className="bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-widest">Criar usuário</button>
         </div>
+      </section>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-             <thead className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                <tr>
-                   <th className="px-8 py-6">Funcionário</th>
-                   <th className="px-6 py-6">Cargo Base</th>
-                   <th className="px-6 py-6">Funções Delegadas</th>
-                   <th className="px-6 py-6 text-center">Último Acesso</th>
-                   <th className="px-8 py-6"></th>
-                </tr>
-             </thead>
-             <tbody className="divide-y divide-slate-100">
-                <TableRow 
-                  name="Sra. Maria Auxiliadora" 
-                  role="Serviços Gerais" 
-                  delegation="Estoque da Cozinha (Full)" 
-                  time="Há 10 min" 
-                  img="https://picsum.photos/id/64/48/48"
-                  status="ativo"
-                />
-                <TableRow 
-                  name="Sr. Cláudio Rocha" 
-                  role="Vigia" 
-                  delegation="Inventário & Patrimônio" 
-                  time="Ontem, 14:20" 
-                  img="https://picsum.photos/id/65/48/48"
-                  status="ativo"
-                />
-                <TableRow 
-                  name="Helena Souza" 
-                  role="Secretária" 
-                  delegation="Envio Bolsa Família" 
-                  time="Hoje, 09:15" 
-                  img="https://picsum.photos/id/66/48/48"
-                  status="suspenso"
-                />
-             </tbody>
-          </table>
+      <section className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100">
+          <h3 className="text-sm font-black uppercase tracking-widest text-slate-500">Usuários e delegações</h3>
         </div>
-      </div>
+        <div className="divide-y divide-slate-100">
+          {usuarios.map((usuario) => (
+            <div key={usuario.id} className="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <p className="font-black text-slate-800">{usuario.nome}</p>
+                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Cargo base: {usuario.papel.replace('_', ' ')}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {usuario.delegacoes.length === 0 ? (
+                  <span className="text-xs text-slate-400 font-bold">Sem delegações</span>
+                ) : (
+                  usuario.delegacoes.map((delegacao) => (
+                    <span key={`${usuario.id}-${delegacao.moduloId}`} className="px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest">
+                      {delegacao.moduloId.replace('_', ' ')}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-slate-900 rounded-[2rem] p-6 text-white">
+        <h3 className="text-sm font-black uppercase tracking-widest text-slate-300 mb-3">Logs mock de delegação</h3>
+        <div className="space-y-2 text-xs">
+          {logs.length === 0 ? <p className="text-slate-400">Nenhum log registrado.</p> : logs.map((log, idx) => <p key={idx}>• {log}</p>)}
+        </div>
+      </section>
     </div>
   );
 };
 
-const TableRow = ({ name, role, delegation, time, img, status }: any) => (
-  <tr className="hover:bg-slate-50 transition-colors group">
-     <td className="px-8 py-5">
-        <div className="flex items-center gap-4">
-           <img src={img} className="w-10 h-10 rounded-xl object-cover" alt="" />
-           <div>
-              <p className="text-sm font-black text-slate-800 leading-none">{name}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 leading-none">Matrícula: 2024-0012</p>
-           </div>
-        </div>
-     </td>
-     <td className="px-6 py-5">
-        <span className="text-xs font-bold text-slate-600 uppercase tracking-tighter">{role}</span>
-     </td>
-     <td className="px-6 py-5">
-        <div className="flex items-center gap-2">
-           <div className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-2">
-              <KeyRound size={12} />
-              <span className="text-[9px] font-black uppercase tracking-widest">{delegation}</span>
-           </div>
-        </div>
-     </td>
-     <td className="px-6 py-5 text-center text-slate-400">
-        <div className="flex items-center justify-center gap-2">
-           <Clock size={12} />
-           <span className="text-[10px] font-black uppercase tracking-widest">{time}</span>
-        </div>
-     </td>
-     <td className="px-8 py-5 text-right">
-        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-           <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-white rounded-xl shadow-sm border border-transparent hover:border-slate-100 transition-all"><Edit3 size={16} /></button>
-           <button className="p-2 text-slate-400 hover:text-rose-600 hover:bg-white rounded-xl shadow-sm border border-transparent hover:border-slate-100 transition-all"><Trash2 size={16} /></button>
-           <button className="p-2 text-slate-400 hover:text-slate-900 hover:bg-white rounded-xl shadow-sm border border-transparent hover:border-slate-100 transition-all"><MoreHorizontal size={16} /></button>
-        </div>
-     </td>
-  </tr>
+const Indicador = ({ titulo, valor, icone }: { titulo: string; valor: string; icone: React.ReactNode }) => (
+  <div className="bg-white border border-slate-200 rounded-2xl p-4">
+    <div className="text-blue-600 mb-2">{icone}</div>
+    <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">{titulo}</p>
+    <p className="text-2xl font-black text-slate-800 tracking-tight">{valor}</p>
+  </div>
 );
 
 export default GestaoAcessos;
