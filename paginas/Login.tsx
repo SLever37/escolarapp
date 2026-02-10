@@ -1,35 +1,22 @@
 
 import React, { useState } from 'react';
 import { GraduationCap, ShieldCheck, ArrowRight, Lock, User as IconeUsuario, AlertCircle } from 'lucide-react';
-import { bd } from '../servicos/bancoDeDados';
-import { Usuario } from '../tipos';
+import { useAuth } from '../context/AuthContext';
 
-interface LoginProps {
-  aoLogarUsuario: (usuario: Usuario) => void;
-}
-
-const Login: React.FC<LoginProps> = ({ aoLogarUsuario }) => {
+const Login: React.FC = () => {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
 
-  const lidarComEnvio = (e: React.FormEvent) => {
+  const lidarComEnvio = async (e: React.FormEvent) => {
     e.preventDefault();
     setCarregando(true);
     setErro('');
-    
-    // Simulação de processamento de login
-    setTimeout(() => {
-      const usuario = bd.validarLogin(email);
-      
-      if (usuario) {
-        aoLogarUsuario(usuario);
-      } else {
-        setErro('Credenciais inválidas ou usuário não provisionado.');
-      }
-      setCarregando(false);
-    }, 1200);
+    const ok = await signIn(email, senha);
+    if (!ok) setErro('Credenciais inválidas ou usuário não provisionado.');
+    setCarregando(false);
   };
 
   return (

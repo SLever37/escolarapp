@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Bell, Search, Building2, Menu } from 'lucide-react';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Bell, Search, Building2 } from 'lucide-react';
 
 // Paginas
 import Login from './paginas/Login';
@@ -15,33 +15,21 @@ import AcessoNegado from './pages/AcessoNegado';
 
 // Componentes
 import NavegacaoLateral from './componentes/NavegacaoLateral';
+import RequireAuth from './components/RequireAuth';
 
-// Tipos e Servicos
-import { Usuario } from './tipos';
-import { bd } from './servicos/bancoDeDados';
+// Auth
+import { useAuth } from './context/AuthContext';
 
 const App: React.FC = () => {
-  const [estaAutenticado, setEstaAutenticado] = useState(false);
-  const [usuarioAtual, setUsuarioAtual] = useState<Usuario | null>(null);
-  const location = useLocation();
+  const { usuario, signOut } = useAuth();
 
-  const lidarComLogin = (usuario: Usuario) => {
-    setUsuarioAtual(usuario);
-    setEstaAutenticado(true);
-  };
-
-  const lidarComLogoff = () => {
-    setEstaAutenticado(false);
-    setUsuarioAtual(null);
-  };
-
-  if (!estaAutenticado || !usuarioAtual) {
-    return <Login aoLogarUsuario={lidarComLogin} />;
+  if (!usuario) {
+    return <Login />;
   }
 
   // Controlador de Dashboard Raiz baseado no Papel
   const renderDashboardPrincipal = () => {
-    switch (usuarioAtual.papel) {
+    switch (usuario.papel) {
       case 'admin_plataforma': return <DashboardMaster />;
       case 'gestor': return <DashboardGestor />;
       case 'pedagogia': return <DashboardPedagogo />;
@@ -54,7 +42,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-inter">
-      <NavegacaoLateral usuario={usuarioAtual} aoSair={lidarComLogoff} />
+      <NavegacaoLateral usuario={usuario} aoSair={signOut} />
 
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 shrink-0 z-40">
@@ -63,7 +51,7 @@ const App: React.FC = () => {
               <Building2 size={16} className="text-blue-600" />
               <div className="flex flex-col">
                 <span className="text-[9px] font-black text-blue-600 uppercase tracking-tighter">Instância Ativa</span>
-                <span className="text-xs font-bold text-slate-700">{usuarioAtual.unidade}</span>
+                <span className="text-xs font-bold text-slate-700">{usuario.unidade}</span>
               </div>
             </div>
           </div>
@@ -84,11 +72,11 @@ const App: React.FC = () => {
         <section className="flex-1 overflow-y-auto p-10 custom-scrollbar">
           <div className="max-w-7xl mx-auto">
             <Routes>
-              <Route path="/" element={renderDashboardPrincipal()} />
-              <Route path="/secretaria" element={<SecretariaLegal />} />
-              <Route path="/professor" element={<DiarioProfessor />} />
-              <Route path="/pedagogia" element={<DashboardPedagogo />} />
-              <Route path="/portaria" element={<PortariaAcesso />} />
+              <Route path="/" element={<RequireAuth><>{renderDashboardPrincipal()}</></RequireAuth>} />
+              <Route path="/secretaria" element={<RequireAuth><GuardiaoPermissao modulo="secretaria_legal"><SecretariaLegal /></GuardiaoPermissao></RequireAuth>} />
+              <Route path="/professor" element={<RequireAuth><GuardiaoPermissao modulo="diario_classe"><DiarioProfessor /></GuardiaoPermissao></RequireAuth>} />
+              <Route path="/pedagogia" element={<RequireAuth><GuardiaoPermissao modulo="pedagogia_central"><DashboardPedagogo /></GuardiaoPermissao></RequireAuth>} />
+              <Route path="/portaria" element={<RequireAuth><GuardiaoPermissao modulo="portaria_acesso"><PortariaAcesso /></GuardiaoPermissao></RequireAuth>} />
               <Route path="/acesso-negado" element={<AcessoNegado />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>

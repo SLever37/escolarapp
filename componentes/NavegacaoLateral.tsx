@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, UserSquare2, Library, Package, 
@@ -7,19 +8,48 @@ import {
   ShieldCheck, LogOut, Search, BrainCircuit, Gavel
 } from 'lucide-react';
 import { Usuario } from '../tipos';
-import { temPermissao } from '../servicos/governanca';
+import { podeAcessar } from '../servicos/permissoesService';
 
 interface SidebarProps {
   usuario: Usuario;
   aoSair: () => void;
 }
 
+const roleLabels: Record<string, string> = {
+  admin_plataforma: 'Administrador Plataforma',
+  gestor: 'Gestor / Diretor',
+  supervisao: 'Supervisão / Pedagogia',
+  secretaria: 'Secretaria',
+  professor: 'Professor',
+  familia: 'Família',
+  portaria: 'Portaria'
+};
+
 const NavegacaoLateral: React.FC<SidebarProps> = ({ usuario, aoSair }) => {
   const location = useLocation();
 
   const LinkMenu = ({ para, icone, label, modulo }: any) => {
     const ativo = location.pathname === para;
-    if (!temPermissao(usuario, modulo, 'ver')) return null;
+    const [permitido, setPermitido] = useState<boolean | null>(null);
+
+    useEffect(() => {
+      let mounted = true;
+      (async () => {
+        if (!usuario) { if (mounted) setPermitido(false); return; }
+        // Perfis administrativos rápidos
+        if (usuario.papel === 'admin_plataforma' || usuario.papel === 'gestor') { if (mounted) setPermitido(true); return; }
+        try {
+          const ok = await podeAcessar(usuario, modulo, 'ver' as any);
+          if (mounted) setPermitido(ok);
+        } catch (e) {
+          if (mounted) setPermitido(false);
+        }
+      })();
+      return () => { mounted = false; };
+    }, [usuario, modulo]);
+
+    if (permitido === null) return null; // evita flicker
+    if (!permitido) return null;
 
     return (
       <Link 
