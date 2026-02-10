@@ -86,3 +86,17 @@ VITE_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
 ```
 
 Sem essas variáveis, o app entra automaticamente em **modo local (mock)** e mostra esse status na interface.
+
+
+## 🌐 Cloudflare Pages: branches no domínio do projeto
+Para que as branches publiquem dentro do domínio do projeto `escolarapp.pages.dev`, configure no Cloudflare:
+
+1. **Project name**: `escolarapp` (isso define o domínio base `escolarapp.pages.dev`).
+2. **Production branch**: escolha a branch principal (ex.: `main` ou `work`).
+3. **Preview deployments**: habilitado para branches.
+
+Com isso, os previews ficam no padrão:
+- Produção: `https://escolarapp.pages.dev`
+- Branch: `https://<nome-da-branch>.escolarapp.pages.dev`
+
+> Observação: não é possível forçar todas as branches para a **mesma URL exata** `https://escolarapp.pages.dev` sem sobrescrever o ambiente de produção. O padrão correto do Cloudflare Pages para branches é subdomínio por branch.
