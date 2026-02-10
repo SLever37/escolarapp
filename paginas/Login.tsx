@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { GraduationCap, ShieldCheck, ArrowRight, Lock, User as IconeUsuario } from 'lucide-react';
 import { PapelUsuario } from '../tipos';
@@ -15,17 +14,22 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
   const lidarComEnvio = (e: React.FormEvent) => {
     e.preventDefault();
     setCarregando(true);
-    
-    // Simulação de Autenticação e Roteamento de Perfil
+
     setTimeout(() => {
-      // Regras de Mock para teste da Hierarquia
-      if (email.startsWith('master')) aoLogar('admin_plataforma');
-      else if (email.startsWith('gestor')) aoLogar('gestor');
-      else if (email.startsWith('prof')) aoLogar('professor');
-      else if (email.startsWith('sec')) aoLogar('secretaria');
-      else if (email.startsWith('ped')) aoLogar('pedagogia');
-      else aoLogar('professor'); // Fallback
-      
+      const emailNormalizado = email.trim().toLowerCase();
+      const senhaNormalizada = senha.trim();
+
+      // Acesso master enraizado
+      if (emailNormalizado === 'socrates.lever@gmail.com' && senhaNormalizada === '123456') aoLogar('admin_plataforma');
+      else if (emailNormalizado.startsWith('master')) aoLogar('admin_plataforma');
+      else if (emailNormalizado.startsWith('gestor')) aoLogar('gestor');
+      else if (emailNormalizado.startsWith('prof')) aoLogar('professor');
+      else if (emailNormalizado.startsWith('sec')) aoLogar('secretaria');
+      else if (emailNormalizado.startsWith('ped')) aoLogar('pedagogia');
+      else if (emailNormalizado.startsWith('familia') || emailNormalizado.startsWith('cpf')) aoLogar('familia');
+      else if (emailNormalizado.startsWith('vigia') || emailNormalizado.startsWith('port')) aoLogar('portaria');
+      else aoLogar('professor');
+
       setCarregando(false);
     }, 800);
   };
@@ -47,14 +51,14 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
 
           <form onSubmit={lidarComEnvio} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">E-mail Institucional</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">E-mail Institucional ou CPF</label>
               <div className="relative">
                 <IconeUsuario className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                <input 
-                  type="email" 
+                <input
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Seu e-mail de acesso..."
+                  placeholder="Ex.: gestor@..., ped@..., cpf@..."
                   className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm font-bold"
                   required
                 />
@@ -65,8 +69,8 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Senha de Acesso</label>
               <div className="relative">
                 <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
                   placeholder="••••••••"
@@ -76,7 +80,7 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
               </div>
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={carregando}
               className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
@@ -98,18 +102,18 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
               <span className="text-[10px] font-black uppercase tracking-widest">Segurança Camada 7</span>
             </div>
             <p className="text-slate-300 text-[9px] font-bold text-center leading-relaxed">
-              Sistema Restrito a Profissionais da Educação. <br/>
-              Monitoramento Forense Ativo.
+              Sistema restrito a profissionais e famílias autorizadas. <br />
+              Monitoramento forense ativo.
             </p>
           </div>
-          
+
           <div className="mt-4 text-center">
-             <p className="text-[9px] font-bold text-slate-400 uppercase">Credenciais de Teste:</p>
-             <div className="flex justify-center gap-2 mt-1">
-                <span className="text-[9px] bg-slate-100 px-2 py-1 rounded">master@...</span>
-                <span className="text-[9px] bg-slate-100 px-2 py-1 rounded">gestor@...</span>
-                <span className="text-[9px] bg-slate-100 px-2 py-1 rounded">prof@...</span>
-             </div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">Perfis de teste:</p>
+            <div className="flex flex-wrap justify-center gap-2 mt-1">
+              {['socrates.lever@gmail.com / 123456', 'master@...', 'gestor@...', 'ped@...', 'sec@...', 'prof@...', 'cpf@...', 'vigia@...'].map((credencial) => (
+                <span key={credencial} className="text-[9px] bg-slate-100 px-2 py-1 rounded">{credencial}</span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
