@@ -1,35 +1,33 @@
 
 import React, { useState } from 'react';
-import { GraduationCap, ShieldCheck, ArrowRight, Lock, User as IconeUsuario, AlertCircle } from 'lucide-react';
-import { bd } from '../servicos/bancoDeDados';
-import { Usuario } from '../tipos';
+import { GraduationCap, ShieldCheck, ArrowRight, Lock, User as IconeUsuario } from 'lucide-react';
+import { PapelUsuario } from '../tipos';
 
 interface LoginProps {
-  aoLogarUsuario: (usuario: Usuario) => void;
+  aoLogar: (papel: PapelUsuario) => void;
 }
 
-const Login: React.FC<LoginProps> = ({ aoLogarUsuario }) => {
+const Login: React.FC<LoginProps> = ({ aoLogar }) => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState('');
 
   const lidarComEnvio = (e: React.FormEvent) => {
     e.preventDefault();
     setCarregando(true);
-    setErro('');
     
-    // Simulação de processamento de login
+    // Simulação de Autenticação e Roteamento de Perfil
     setTimeout(() => {
-      const usuario = bd.validarLogin(email);
+      // Regras de Mock para teste da Hierarquia
+      if (email.startsWith('master')) aoLogar('admin_plataforma');
+      else if (email.startsWith('gestor')) aoLogar('gestor');
+      else if (email.startsWith('prof')) aoLogar('professor');
+      else if (email.startsWith('sec')) aoLogar('secretaria');
+      else if (email.startsWith('ped')) aoLogar('pedagogia');
+      else aoLogar('professor'); // Fallback
       
-      if (usuario) {
-        aoLogarUsuario(usuario);
-      } else {
-        setErro('Credenciais inválidas ou usuário não provisionado.');
-      }
       setCarregando(false);
-    }, 1200);
+    }, 800);
   };
 
   return (
@@ -44,17 +42,10 @@ const Login: React.FC<LoginProps> = ({ aoLogarUsuario }) => {
               <GraduationCap className="text-white w-10 h-10" />
             </div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tighter text-center">EscolarApp</h1>
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mt-2 text-center">Governança Institucional</p>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mt-2">Plataforma de Governança</p>
           </div>
 
           <form onSubmit={lidarComEnvio} className="space-y-6">
-            {erro && (
-              <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-3 text-rose-600 animate-in slide-in-from-top-2">
-                 <AlertCircle size={18} />
-                 <span className="text-xs font-bold leading-tight">{erro}</span>
-              </div>
-            )}
-
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">E-mail Institucional</label>
               <div className="relative">
@@ -63,7 +54,7 @@ const Login: React.FC<LoginProps> = ({ aoLogarUsuario }) => {
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="master@escolar.app"
+                  placeholder="Seu e-mail de acesso..."
                   className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm font-bold"
                   required
                 />
@@ -94,7 +85,7 @@ const Login: React.FC<LoginProps> = ({ aoLogarUsuario }) => {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>ENTRAR NO ECOSSISTEMA</span>
+                  <span>ACESSAR AMBIENTE</span>
                   <ArrowRight size={18} />
                 </>
               )}
@@ -104,22 +95,22 @@ const Login: React.FC<LoginProps> = ({ aoLogarUsuario }) => {
           <div className="mt-10 pt-8 border-t border-slate-50 flex flex-col items-center">
             <div className="flex items-center gap-2 text-emerald-500 mb-2">
               <ShieldCheck size={16} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Criptografia Ponta-a-Ponta</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">Segurança Camada 7</span>
             </div>
             <p className="text-slate-300 text-[9px] font-bold text-center leading-relaxed">
-              O acesso indevido gera registro forense automático. <br/>
-              © 2024 EscolarApp Platform.
+              Sistema Restrito a Profissionais da Educação. <br/>
+              Monitoramento Forense Ativo.
             </p>
           </div>
-        </div>
-
-        {/* Dicas de Teste */}
-        <div className="mt-8 flex flex-col items-center gap-2 opacity-60">
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contas de Teste</p>
-           <div className="flex gap-4">
-              <div className="text-[9px] font-bold bg-white px-3 py-1 rounded-full border border-slate-200">MASTER: master@...</div>
-              <div className="text-[9px] font-bold bg-white px-3 py-1 rounded-full border border-slate-200">GESTOR: gestor@...</div>
-           </div>
+          
+          <div className="mt-4 text-center">
+             <p className="text-[9px] font-bold text-slate-400 uppercase">Credenciais de Teste:</p>
+             <div className="flex justify-center gap-2 mt-1">
+                <span className="text-[9px] bg-slate-100 px-2 py-1 rounded">master@...</span>
+                <span className="text-[9px] bg-slate-100 px-2 py-1 rounded">gestor@...</span>
+                <span className="text-[9px] bg-slate-100 px-2 py-1 rounded">prof@...</span>
+             </div>
+          </div>
         </div>
       </div>
     </div>

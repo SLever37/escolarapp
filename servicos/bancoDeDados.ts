@@ -54,6 +54,12 @@ export const bd = {
     return nova;
   },
 
+  removerUnidade: (id: string): void => {
+    const unidades = bd.getUnidades();
+    const novasUnidades = unidades.filter(u => u.id !== id);
+    localStorage.setItem(CHAVE_UNIDADES, JSON.stringify(novasUnidades));
+  },
+
   // --- GESTÃO DE USUÁRIOS ---
   getUsuarios: (): Usuario[] => {
     const dados = localStorage.getItem(CHAVE_USUARIOS);

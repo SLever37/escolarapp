@@ -1,32 +1,53 @@
 
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Bell, Search, Building2, Menu } from 'lucide-react';
+import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Bell, Search, Building2 } from 'lucide-react';
 
 // Paginas
 import Login from './paginas/Login';
 import DashboardMaster from './paginas/master/DashboardMaster';
-import DashboardGestor from './pages/DashboardGestor';
+import DashboardGestor from './pages/DashboardGestor'; // Ajustaremos o nome no proximo passo se necessario
+import AcessoNegado from './pages/AcessoNegado'; // Vamos criar/ajustar esse componente
+import GestaoAcessos from './pages/gestor/GestaoAcessos'; // Nova página
+
+// Componentes Reutilizados (Wrappers para os Módulos Existentes)
 import DashboardPedagogo from './pages/DashboardPedagogo';
 import SecretariaLegal from './pages/SecretariaLegal';
 import DiarioProfessor from './pages/DiarioProfessor';
 import PortariaAcesso from './pages/PortariaAcesso';
-import AcessoNegado from './pages/AcessoNegado';
 
-// Componentes
+// Componentes UI
 import NavegacaoLateral from './componentes/NavegacaoLateral';
 
 // Tipos e Servicos
-import { Usuario } from './tipos';
-import { bd } from './servicos/bancoDeDados';
+import { Usuario, PapelUsuario } from './tipos';
 
 const App: React.FC = () => {
   const [estaAutenticado, setEstaAutenticado] = useState(false);
   const [usuarioAtual, setUsuarioAtual] = useState<Usuario | null>(null);
-  const location = useLocation();
 
-  const lidarComLogin = (usuario: Usuario) => {
-    setUsuarioAtual(usuario);
+  // Função de Login Simulado com Mocks de Perfil
+  const lidarComLogin = (papel: PapelUsuario) => {
+    let mockUsuario: Usuario = {
+      id: 'u1',
+      nome: 'Usuário Padrão',
+      cpf: '000.000.000-00',
+      papel: papel,
+      unidade: 'E.M. Presidente Vargas',
+      delegacoes: []
+    };
+
+    // Personalizando o Mock baseado no papel
+    if (papel === 'admin_plataforma') {
+      mockUsuario.nome = "Administrador Master";
+      mockUsuario.unidade = "Plataforma Central";
+    } else if (papel === 'gestor') {
+      mockUsuario.nome = "Dr. Roberto Magalhães";
+    } else if (papel === 'professor') {
+      mockUsuario.nome = "Prof. Ricardo Santos";
+    }
+
+    setUsuarioAtual(mockUsuario);
     setEstaAutenticado(true);
   };
 
@@ -36,27 +57,15 @@ const App: React.FC = () => {
   };
 
   if (!estaAutenticado || !usuarioAtual) {
-    return <Login aoLogarUsuario={lidarComLogin} />;
+    return <Login aoLogar={lidarComLogin} />;
   }
-
-  // Controlador de Dashboard Raiz baseado no Papel
-  const renderDashboardPrincipal = () => {
-    switch (usuarioAtual.papel) {
-      case 'admin_plataforma': return <DashboardMaster />;
-      case 'gestor': return <DashboardGestor />;
-      case 'pedagogia': return <DashboardPedagogo />;
-      case 'professor': return <DiarioProfessor />;
-      case 'secretaria': return <SecretariaLegal />;
-      case 'portaria': return <PortariaAcesso />;
-      default: return <DashboardPedagogo />;
-    }
-  };
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-inter">
       <NavegacaoLateral usuario={usuarioAtual} aoSair={lidarComLogoff} />
 
       <main className="flex-1 flex flex-col min-w-0">
+        {/* Header Global */}
         <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 shrink-0 z-40">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-2 rounded-2xl">
@@ -81,14 +90,41 @@ const App: React.FC = () => {
           </div>
         </header>
 
+        {/* Área de Conteúdo Rotativo */}
         <section className="flex-1 overflow-y-auto p-10 custom-scrollbar">
           <div className="max-w-7xl mx-auto">
             <Routes>
-              <Route path="/" element={renderDashboardPrincipal()} />
-              <Route path="/secretaria" element={<SecretariaLegal />} />
-              <Route path="/professor" element={<DiarioProfessor />} />
-              <Route path="/pedagogia" element={<DashboardPedagogo />} />
-              <Route path="/portaria" element={<PortariaAcesso />} />
+              {/* Rota Raiz: Redireciona para o Dashboard correto baseado no papel */}
+              <Route path="/" element={
+                usuarioAtual.papel === 'admin_plataforma' ? <DashboardMaster /> :
+                usuarioAtual.papel === 'gestor' ? <DashboardGestor /> :
+                usuarioAtual.papel === 'pedagogia' ? <DashboardPedagogo /> :
+                usuarioAtual.papel === 'secretaria' ? <SecretariaLegal /> :
+                usuarioAtual.papel === 'professor' ? <DiarioProfessor /> :
+                <AcessoNegado />
+              } />
+
+              {/* Rotas Específicas do Gestor */}
+              {usuarioAtual.papel === 'gestor' && (
+                <>
+                  <Route path="/acessos" element={<GestaoAcessos />} />
+                  {/* Gestor tem visão de tudo, então pode acessar rotas dos departamentos */}
+                  <Route path="/pedagogia" element={<DashboardPedagogo />} />
+                  <Route path="/secretaria" element={<SecretariaLegal />} />
+                  <Route path="/portaria" element={<PortariaAcesso />} />
+                </>
+              )}
+
+              {/* Rotas Departamentais (Acessíveis se o usuário for do papel OU Gestor) */}
+              <Route path="/pedagogia" element={
+                ['gestor', 'pedagogia'].includes(usuarioAtual.papel) ? <DashboardPedagogo /> : <AcessoNegado />
+              } />
+              
+              <Route path="/secretaria" element={
+                ['gestor', 'secretaria'].includes(usuarioAtual.papel) ? <SecretariaLegal /> : <AcessoNegado />
+              } />
+
+              {/* Rota Universal de Erro */}
               <Route path="/acesso-negado" element={<AcessoNegado />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
