@@ -141,12 +141,15 @@ begin
 end;
 $$;
 
+drop trigger if exists trg_unidades_updated_at on public.unidades_escolares;
 create trigger trg_unidades_updated_at before update on public.unidades_escolares
 for each row execute function public.set_updated_at();
 
+drop trigger if exists trg_usuarios_updated_at on public.usuarios;
 create trigger trg_usuarios_updated_at before update on public.usuarios
 for each row execute function public.set_updated_at();
 
+drop trigger if exists trg_alunos_updated_at on public.alunos;
 create trigger trg_alunos_updated_at before update on public.alunos
 for each row execute function public.set_updated_at();
 
@@ -161,9 +164,48 @@ alter table public.alunos enable row level security;
 alter table public.alunos_pcd enable row level security;
 
 -- Políticas mínimas para desenvolvimento (apenas usuários autenticados)
-create policy if not exists "auth_read_unidades" on public.unidades_escolares for select to authenticated using (true);
-create policy if not exists "auth_read_usuarios" on public.usuarios for select to authenticated using (true);
-create policy if not exists "auth_read_delegacoes" on public.delegacoes for select to authenticated using (true);
-create policy if not exists "auth_read_logs" on public.logs_auditoria for select to authenticated using (true);
-create policy if not exists "auth_read_alunos" on public.alunos for select to authenticated using (true);
-create policy if not exists "auth_read_alunos_pcd" on public.alunos_pcd for select to authenticated using (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'unidades_escolares' and policyname = 'auth_read_unidades'
+  ) then
+    create policy "auth_read_unidades" on public.unidades_escolares for select to authenticated using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'usuarios' and policyname = 'auth_read_usuarios'
+  ) then
+    create policy "auth_read_usuarios" on public.usuarios for select to authenticated using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'delegacoes' and policyname = 'auth_read_delegacoes'
+  ) then
+    create policy "auth_read_delegacoes" on public.delegacoes for select to authenticated using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'logs_auditoria' and policyname = 'auth_read_logs'
+  ) then
+    create policy "auth_read_logs" on public.logs_auditoria for select to authenticated using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'alunos' and policyname = 'auth_read_alunos'
+  ) then
+    create policy "auth_read_alunos" on public.alunos for select to authenticated using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'alunos_pcd' and policyname = 'auth_read_alunos_pcd'
+  ) then
+    create policy "auth_read_alunos_pcd" on public.alunos_pcd for select to authenticated using (true);
+  end if;
+end
+$$;

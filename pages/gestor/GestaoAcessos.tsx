@@ -1,58 +1,63 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { UserPlus, KeyRound, ClipboardList, ShieldCheck } from 'lucide-react';
-import { PapelUsuario, Usuario } from '../../tipos';
-import { PRESETS_DELEGACAO, PresetDelegacao } from '../../src/utils/delegacoes';
-
-interface UsuarioMock extends Pick<Usuario, 'id' | 'nome' | 'papel' | 'delegacoes'> {}
-
-const usuariosIniciais: UsuarioMock[] = [
-  { id: '1', nome: 'Sra. Maria Auxiliadora', papel: 'servicos_gerais', delegacoes: PRESETS_DELEGACAO.merendeira.delegacoes },
-  { id: '2', nome: 'Sr. Cláudio Rocha', papel: 'portaria', delegacoes: PRESETS_DELEGACAO.vigia_patrimonio.delegacoes },
-  { id: '3', nome: 'Joana Prado', papel: 'secretaria', delegacoes: [] },
-];
+import { PapelUsuario } from '../../tipos';
+import { PresetDelegacao } from '../../src/utils/delegacoes';
+import { criarUsuarioInterno, listarUsuariosInternos, UsuarioInterno } from '../../src/services/usuariosService';
 
 const GestaoAcessos: React.FC = () => {
-  const [usuarios, setUsuarios] = useState<UsuarioMock[]>(usuariosIniciais);
+  const [usuarios, setUsuarios] = useState<UsuarioInterno[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [nome, setNome] = useState('');
   const [papel, setPapel] = useState<PapelUsuario>('servicos_gerais');
   const [preset, setPreset] = useState<PresetDelegacao>('merendeira');
+  const [conectadoAoBanco, setConectadoAoBanco] = useState(false);
 
   const totalDelegacoes = useMemo(
     () => usuarios.reduce((acc, usuario) => acc + usuario.delegacoes.length, 0),
     [usuarios]
   );
 
-  const criarUsuario = () => {
-    if (!nome.trim()) return;
+  const carregar = async () => {
+    const resposta = await listarUsuariosInternos();
+    setUsuarios(resposta.usuarios);
+    setConectadoAoBanco(resposta.conectadoAoBanco);
+  };
 
-    const novo: UsuarioMock = {
-      id: `${Date.now()}`,
-      nome,
-      papel,
-      delegacoes: PRESETS_DELEGACAO[preset].delegacoes,
-    };
+  useEffect(() => {
+    carregar();
+  }, []);
 
-    setUsuarios((atual) => [novo, ...atual]);
+  const criarUsuario = async () => {
+    const resultado = await criarUsuarioInterno(nome, papel, preset);
+
     setLogs((atual) => [
-      `${new Date().toLocaleString('pt-BR')} — Usuário ${nome} criado com preset ${PRESETS_DELEGACAO[preset].nome}.`,
+      `${new Date().toLocaleString('pt-BR')} — ${resultado.mensagem}`,
       ...atual,
     ]);
-    setNome('');
+
+    if (resultado.sucesso) {
+      setNome('');
+      await carregar();
+    }
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <header>
+      <header className="flex flex-col gap-2">
         <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">Gestão de Acessos</h2>
-        <p className="text-slate-500 text-sm mt-2 font-medium">Criar usuários e delegar funções por módulo com trilha de auditoria.</p>
+        <p className="text-slate-500 text-sm font-medium">Criar usuários e delegar funções por módulo com trilha de auditoria.</p>
+        <div>
+          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${conectadoAoBanco ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+            {conectadoAoBanco ? 'Banco conectado (Supabase)' : 'Modo local (sem conexão de banco)'}
+          </span>
+        </div>
       </header>
 
       <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Indicador titulo="Usuários" valor={`${usuarios.length}`} icone={<UserPlus size={18} />} />
         <Indicador titulo="Delegações Ativas" valor={`${totalDelegacoes}`} icone={<KeyRound size={18} />} />
         <Indicador titulo="Presets Oficiais" valor="3" icone={<ClipboardList size={18} />} />
-        <Indicador titulo="Status" valor="Conforme" icone={<ShieldCheck size={18} />} />
+        <Indicador titulo="Status" valor={conectadoAoBanco ? 'Conectado' : 'Local'} icone={<ShieldCheck size={18} />} />
       </section>
 
       <section className="bg-white rounded-[2rem] border border-slate-200 p-6 space-y-4">
@@ -89,9 +94,9 @@ const GestaoAcessos: React.FC = () => {
                 {usuario.delegacoes.length === 0 ? (
                   <span className="text-xs text-slate-400 font-bold">Sem delegações</span>
                 ) : (
-                  usuario.delegacoes.map((delegacao) => (
-                    <span key={`${usuario.id}-${delegacao.moduloId}`} className="px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest">
-                      {delegacao.moduloId.replace('_', ' ')}
+                  usuario.delegacoes.map((modulo) => (
+                    <span key={`${usuario.id}-${modulo}`} className="px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest">
+                      {modulo.replace('_', ' ')}
                     </span>
                   ))
                 )}
@@ -102,7 +107,7 @@ const GestaoAcessos: React.FC = () => {
       </section>
 
       <section className="bg-slate-900 rounded-[2rem] p-6 text-white">
-        <h3 className="text-sm font-black uppercase tracking-widest text-slate-300 mb-3">Logs mock de delegação</h3>
+        <h3 className="text-sm font-black uppercase tracking-widest text-slate-300 mb-3">Logs de criação/delegação</h3>
         <div className="space-y-2 text-xs">
           {logs.length === 0 ? <p className="text-slate-400">Nenhum log registrado.</p> : logs.map((log, idx) => <p key={idx}>• {log}</p>)}
         </div>

@@ -75,3 +75,14 @@ Também inclui seed do master de aplicação:
 - papel: `admin_plataforma` (nível 0)
 
 > A senha (`123456`) deve ser criada no **Supabase Auth** (Dashboard), pois não é armazenada na tabela `usuarios`.
+
+
+### Conexão do app com banco (Supabase)
+A tela **Gestão de Acessos** agora tenta ler/gravar no banco via API REST do Supabase quando as variáveis abaixo estão configuradas:
+
+```bash
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
+```
+
+Sem essas variáveis, o app entra automaticamente em **modo local (mock)** e mostra esse status na interface.
