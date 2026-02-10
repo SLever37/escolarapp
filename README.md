@@ -83,6 +83,8 @@ A tela **Gestão de Acessos** agora tenta ler/gravar no banco via API REST do Su
 ```bash
 VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 VITE_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
+# ou
+VITE_SUPABASE_PUBLISHABLE_KEY=SUA_CHAVE_PUBLISHABLE
 ```
 
 Sem essas variáveis, o app entra automaticamente em **modo local (mock)** e mostra esse status na interface.
@@ -100,3 +102,6 @@ Com isso, os previews ficam no padrão:
 - Branch: `https://<nome-da-branch>.escolarapp.pages.dev`
 
 > Observação: não é possível forçar todas as branches para a **mesma URL exata** `https://escolarapp.pages.dev` sem sobrescrever o ambiente de produção. O padrão correto do Cloudflare Pages para branches é subdomínio por branch.
+
+
+⚠️ Nunca comite chaves reais no repositório. Use `.env.local` no ambiente local e variáveis de ambiente no Cloudflare Pages.

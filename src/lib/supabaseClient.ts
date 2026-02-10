@@ -1,11 +1,13 @@
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-export const supabaseAtivo = Boolean(supabaseUrl && supabaseAnonKey);
+export const supabaseAtivo = Boolean(supabaseUrl && supabaseKey);
 
 const headersBase = {
-  apikey: supabaseAnonKey,
-  Authorization: `Bearer ${supabaseAnonKey}`,
+  apikey: supabaseKey,
+  Authorization: `Bearer ${supabaseKey}`,
   'Content-Type': 'application/json',
 };
 
