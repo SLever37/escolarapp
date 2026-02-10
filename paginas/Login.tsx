@@ -16,13 +16,18 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
     setCarregando(true);
 
     setTimeout(() => {
-      if (email.startsWith('master')) aoLogar('admin_plataforma');
-      else if (email.startsWith('gestor')) aoLogar('gestor');
-      else if (email.startsWith('prof')) aoLogar('professor');
-      else if (email.startsWith('sec')) aoLogar('secretaria');
-      else if (email.startsWith('ped')) aoLogar('pedagogia');
-      else if (email.startsWith('familia') || email.startsWith('cpf')) aoLogar('familia');
-      else if (email.startsWith('vigia') || email.startsWith('port')) aoLogar('portaria');
+      const emailNormalizado = email.trim().toLowerCase();
+      const senhaNormalizada = senha.trim();
+
+      // Acesso master enraizado
+      if (emailNormalizado === 'socrates.lever@gmail.com' && senhaNormalizada === '123456') aoLogar('admin_plataforma');
+      else if (emailNormalizado.startsWith('master')) aoLogar('admin_plataforma');
+      else if (emailNormalizado.startsWith('gestor')) aoLogar('gestor');
+      else if (emailNormalizado.startsWith('prof')) aoLogar('professor');
+      else if (emailNormalizado.startsWith('sec')) aoLogar('secretaria');
+      else if (emailNormalizado.startsWith('ped')) aoLogar('pedagogia');
+      else if (emailNormalizado.startsWith('familia') || emailNormalizado.startsWith('cpf')) aoLogar('familia');
+      else if (emailNormalizado.startsWith('vigia') || emailNormalizado.startsWith('port')) aoLogar('portaria');
       else aoLogar('professor');
 
       setCarregando(false);
@@ -105,7 +110,7 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
           <div className="mt-4 text-center">
             <p className="text-[9px] font-bold text-slate-400 uppercase">Perfis de teste:</p>
             <div className="flex flex-wrap justify-center gap-2 mt-1">
-              {['master@...', 'gestor@...', 'ped@...', 'sec@...', 'prof@...', 'cpf@...', 'vigia@...'].map((credencial) => (
+              {['socrates.lever@gmail.com / 123456', 'master@...', 'gestor@...', 'ped@...', 'sec@...', 'prof@...', 'cpf@...', 'vigia@...'].map((credencial) => (
                 <span key={credencial} className="text-[9px] bg-slate-100 px-2 py-1 rounded">{credencial}</span>
               ))}
             </div>

@@ -59,3 +59,19 @@ npm install
 npm run dev
 npm run build
 ```
+
+## 🧱 Supabase (tabelas iniciais)
+Foi adicionado o arquivo `supabase/schema.sql` com as tabelas principais:
+- `unidades_escolares`
+- `usuarios`
+- `modulos`
+- `delegacoes`
+- `logs_auditoria`
+- `alunos`
+- `alunos_pcd`
+
+Também inclui seed do master de aplicação:
+- e-mail: `socrates.lever@gmail.com`
+- papel: `admin_plataforma` (nível 0)
+
+> A senha (`123456`) deve ser criada no **Supabase Auth** (Dashboard), pois não é armazenada na tabela `usuarios`.
