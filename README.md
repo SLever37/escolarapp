@@ -89,6 +89,8 @@ VITE_SUPABASE_PUBLISHABLE_KEY=SUA_CHAVE_PUBLISHABLE
 
 Sem essas variáveis, o app entra automaticamente em **modo local (mock)** e mostra esse status na interface.
 
+> Dica: no arquivo `.env.local`, use sem espaços: `VITE_SUPABASE_URL=https://...` (evite `VITE_SUPABASE_URL = https://...`).
+
 
 ## 🌐 Cloudflare Pages: branches no domínio do projeto
 Para que as branches publiquem dentro do domínio do projeto `escolarapp.pages.dev`, configure no Cloudflare:
