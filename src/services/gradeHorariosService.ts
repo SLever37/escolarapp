@@ -34,6 +34,14 @@ export interface GradeHorario {
   itens: ItemGradeHorario[];
 }
 
+
+export interface ResumoVersaoGrade {
+  id: string;
+  versao: number;
+  status: 'rascunho' | 'publicada';
+  semana_ref: string;
+}
+
 const mockGrade: GradeHorario = {
   unidade_id: 'dev',
   turma: '8º Ano B',
@@ -147,6 +155,55 @@ export const carregarGradePorTurma = async (turma: string): Promise<{ grade: Gra
     return { conectado: true, grade: { ...grades[0], itens } };
   } catch {
     return { grade: mockGrade, conectado: false };
+  }
+};
+
+
+
+export const listarVersoesGradePorTurma = async (turma: string): Promise<{ versoes: ResumoVersaoGrade[]; conectado: boolean }> => {
+  if (!supabaseConfigurado) {
+    return { versoes: [{ id: 'mock', versao: 1, status: 'rascunho', semana_ref: mockGrade.semana_ref }], conectado: false };
+  }
+
+  try {
+    const ctx = await contexto();
+    if (!ctx?.perfil.unidade_id) return { versoes: [], conectado: false };
+
+    const resp = await fetch(`${baseUrl()}/rest/v1/grade_horarios?select=id,versao,status,semana_ref&unidade_id=eq.${ctx.perfil.unidade_id}&turma=eq.${encodeURIComponent(turma)}&order=versao.desc&limit=20`, {
+      headers: headersAuth(ctx.token),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    const versoes = await resp.json() as ResumoVersaoGrade[];
+    return { versoes, conectado: true };
+  } catch {
+    return { versoes: [], conectado: false };
+  }
+};
+
+export const carregarGradePorId = async (gradeId: string): Promise<{ grade: GradeHorario | null; conectado: boolean }> => {
+  if (!supabaseConfigurado) return { grade: null, conectado: false };
+
+  try {
+    const ctx = await contexto();
+    if (!ctx?.perfil.unidade_id) return { grade: null, conectado: false };
+
+    const resp = await fetch(`${baseUrl()}/rest/v1/grade_horarios?select=id,unidade_id,turma,semana_ref,versao,status&id=eq.${gradeId}&unidade_id=eq.${ctx.perfil.unidade_id}&limit=1`, {
+      headers: headersAuth(ctx.token),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    const grades = await resp.json() as Array<{ id: string; unidade_id: string; turma: string; semana_ref: string; versao: number; status: 'rascunho' | 'publicada' }>;
+
+    if (!grades[0]) return { grade: null, conectado: true };
+
+    const itensResp = await fetch(`${baseUrl()}/rest/v1/grade_horarios_itens?select=id,dia_semana,horario_inicio,horario_fim,disciplina,professor_id,sala&grade_id=eq.${gradeId}`, {
+      headers: headersAuth(ctx.token),
+    });
+    if (!itensResp.ok) throw new Error(await itensResp.text());
+    const itens = await itensResp.json() as ItemGradeHorario[];
+
+    return { grade: { ...grades[0], itens }, conectado: true };
+  } catch {
+    return { grade: null, conectado: false };
   }
 };
 

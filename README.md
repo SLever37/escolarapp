@@ -156,3 +156,4 @@ Com isso, os previews ficam no padrão:
   - validação de preenchimento obrigatório (disciplina/professor/sala)
 - O bloqueio de salvar ocorre quando há conflitos detectados.
 - Salvamento gera nova versão por turma e permite ações separadas de rascunho/publicação.
+- Interface inclui histórico de versões por turma com ação de carregar versão para edição.
