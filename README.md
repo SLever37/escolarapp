@@ -131,3 +131,11 @@ Com isso, os previews ficam no padrão:
   - Bibliotecário (Biblioteca)
   - Almoxarife (Estoque Geral)
 - Ao salvar delegações, o sistema persiste em `public.delegacoes` e grava auditoria em `public.logs_auditoria` com `antes/depois`.
+
+
+## 🧬 Fase 3 — Governança de PCD em runtime
+- Criada a tabela `public.permissoes_pcd` para autorizações individuais de visualização de PCD.
+- Regras de visualização no app:
+  - Gestor e Supervisão/Pedagogia: acesso completo.
+  - Professor: acesso somente quando autorizado em `permissoes_pcd`.
+- Ações de visualizar/editar dados PCD geram logs em `public.logs_auditoria` com ações `VER_PCD` e `EDITAR_PCD`.

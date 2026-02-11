@@ -110,7 +110,7 @@ const App: React.FC = () => {
               <Route path="/familia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['familia', 'secretaria']}><PortalFamilia /></GuardiaoDeRota>} />
               <Route path="/portaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['portaria', 'servicos_gerais']}><PortariaAcesso /></GuardiaoDeRota>} />
               <Route path="/mensagens" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia', 'secretaria', 'professor']}><MensageiroCentral /></GuardiaoDeRota>} />
-              <Route path="/aluno/perfil" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia']}><PerfilAlunoHub /></GuardiaoDeRota>} />
+              <Route path="/aluno/perfil" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia', 'professor']}><PerfilAlunoHub usuarioAtual={usuarioAtual} /></GuardiaoDeRota>} />
 
               <Route path="/acesso-negado" element={<AcessoNegado />} />
               <Route path="*" element={<Navigate to={rotaInicialPorPerfil(usuarioAtual.papel)} replace />} />

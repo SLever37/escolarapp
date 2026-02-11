@@ -97,6 +97,16 @@ create table if not exists public.alunos (
   updated_at timestamptz not null default now()
 );
 
+
+
+create table if not exists public.permissoes_pcd (
+  id uuid primary key default uuid_generate_v4(),
+  usuario_id uuid not null references public.usuarios(id) on delete cascade,
+  pode_ver_pcd boolean not null default false,
+  motivo text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.alunos_pcd (
   aluno_id uuid primary key references public.alunos(id) on delete cascade,
   pcd boolean not null default false,
@@ -162,6 +172,7 @@ alter table public.delegacoes enable row level security;
 alter table public.logs_auditoria enable row level security;
 alter table public.alunos enable row level security;
 alter table public.alunos_pcd enable row level security;
+alter table public.permissoes_pcd enable row level security;
 
 -- Políticas mínimas para desenvolvimento (apenas usuários autenticados)
 do $$
@@ -206,6 +217,13 @@ begin
     where schemaname = 'public' and tablename = 'alunos_pcd' and policyname = 'auth_read_alunos_pcd'
   ) then
     create policy "auth_read_alunos_pcd" on public.alunos_pcd for select to authenticated using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'permissoes_pcd' and policyname = 'auth_read_permissoes_pcd'
+  ) then
+    create policy "auth_read_permissoes_pcd" on public.permissoes_pcd for select to authenticated using (true);
   end if;
 end
 $$;
