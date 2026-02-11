@@ -61,7 +61,8 @@ values
   ('patrimonio','Patrimônio','Inventário e patrimônio'),
   ('biblioteca','Biblioteca','Gestão de acervo'),
   ('auditoria_forense','Auditoria Forense','Trilha de auditoria'),
-  ('backup_institucional','Backup Institucional','Rotinas de cópia de segurança')
+  ('backup_institucional','Backup Institucional','Rotinas de cópia de segurança'),
+  ('pcd','PCD','Dados e adaptações de estudantes PCD')
 on conflict (id) do nothing;
 
 create type public.acao_permissao as enum ('ver','criar','editar','excluir','imprimir','exportar');
@@ -715,5 +716,136 @@ begin
       execute format('create policy %I on public.%I for all to authenticated using (true) with check (true);', 'auth_write_' || t, t);
     end if;
   end loop;
+end
+$$;
+
+-- =====================================================
+-- HELPERS DE AUTORIZAÇÃO (uso em policies)
+-- =====================================================
+create or replace function public.usuario_papel_atual()
+returns text
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select papel::text from public.usuarios where auth_user_id = auth.uid() limit 1;
+$$;
+
+create or replace function public.usuario_unidade_atual()
+returns uuid
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select unidade_id from public.usuarios where auth_user_id = auth.uid() limit 1;
+$$;
+
+create or replace function public.is_gestor()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(public.usuario_papel_atual() = 'gestor', false);
+$$;
+
+create or replace function public.is_pedagogia()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(public.usuario_papel_atual() = 'pedagogia', false);
+$$;
+
+create or replace function public.same_unidade(p_unidade uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(public.usuario_unidade_atual() = p_unidade, false);
+$$;
+
+grant execute on function public.usuario_papel_atual() to authenticated;
+grant execute on function public.usuario_unidade_atual() to authenticated;
+grant execute on function public.is_gestor() to authenticated;
+grant execute on function public.is_pedagogia() to authenticated;
+grant execute on function public.same_unidade(uuid) to authenticated;
+
+-- =====================================================
+-- POLICIES ESPECÍFICAS: GRADE DE HORÁRIOS (escrita restrita)
+-- =====================================================
+do $$
+begin
+  if exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'grade_horarios' and policyname = 'auth_write_grade_horarios'
+  ) then
+    drop policy "auth_write_grade_horarios" on public.grade_horarios;
+  end if;
+
+  if exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'grade_horarios_itens' and policyname = 'auth_write_grade_horarios_itens'
+  ) then
+    drop policy "auth_write_grade_horarios_itens" on public.grade_horarios_itens;
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='grade_horarios' and policyname='grade_horarios_select_mesma_unidade'
+  ) then
+    create policy "grade_horarios_select_mesma_unidade" on public.grade_horarios
+      for select to authenticated using (public.same_unidade(unidade_id) or public.usuario_papel_atual() = 'admin_plataforma');
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='grade_horarios' and policyname='grade_horarios_write_gestor_pedagogia'
+  ) then
+    create policy "grade_horarios_write_gestor_pedagogia" on public.grade_horarios
+      for all to authenticated
+      using ((public.is_gestor() or public.is_pedagogia()) and public.same_unidade(unidade_id))
+      with check ((public.is_gestor() or public.is_pedagogia()) and public.same_unidade(unidade_id));
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='grade_horarios_itens' and policyname='grade_itens_select_mesma_unidade'
+  ) then
+    create policy "grade_itens_select_mesma_unidade" on public.grade_horarios_itens
+      for select to authenticated
+      using (
+        exists (
+          select 1 from public.grade_horarios gh
+          where gh.id = grade_horarios_itens.grade_id
+            and (public.same_unidade(gh.unidade_id) or public.usuario_papel_atual() = 'admin_plataforma')
+        )
+      );
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='grade_horarios_itens' and policyname='grade_itens_write_gestor_pedagogia'
+  ) then
+    create policy "grade_itens_write_gestor_pedagogia" on public.grade_horarios_itens
+      for all to authenticated
+      using (
+        exists (
+          select 1 from public.grade_horarios gh
+          where gh.id = grade_horarios_itens.grade_id
+            and (public.is_gestor() or public.is_pedagogia())
+            and public.same_unidade(gh.unidade_id)
+        )
+      )
+      with check (
+        exists (
+          select 1 from public.grade_horarios gh
+          where gh.id = grade_horarios_itens.grade_id
+            and (public.is_gestor() or public.is_pedagogia())
+            and public.same_unidade(gh.unidade_id)
+        )
+      );
+  end if;
 end
 $$;

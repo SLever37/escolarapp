@@ -14,14 +14,14 @@ O EscolarApp prioriza conformidade legal, segurança de dados (LGPD) e apoio à 
 - **Nível 5 — Família:** consulta da vida escolar via acesso mock por CPF.
 - **Nível 6 — Vigia/Portaria:** controle de entrada e saída, ocorrências e presença do dia.
 
-## 🛣️ Rotas principais de painéis por perfil
-- `/painel/master`
-- `/painel/gestor`
-- `/painel/supervisao`
-- `/painel/secretaria`
-- `/painel/professor`
-- `/painel/familia`
-- `/painel/portaria`
+## 🛣️ Rotas principais por perfil
+- `/master`
+- `/gestao`
+- `/supervisao`
+- `/secretaria`
+- `/professor`
+- `/familia`
+- `/portaria`
 
 As rotas usam guardião de perfil. Se o usuário tentar acessar rota proibida, ele é redirecionado para o painel do próprio perfil.
 
@@ -137,12 +137,12 @@ Com isso, os previews ficam no padrão:
 - Criada a tabela `public.permissoes_pcd` para autorizações individuais de visualização de PCD.
 - Regras de visualização no app:
   - Gestor e Supervisão/Pedagogia: acesso completo.
-  - Professor: acesso somente quando autorizado em `permissoes_pcd`.
+  - Secretaria: acesso somente com delegação/permissão explícita de módulo `PCD`.
 - Ações de visualizar/editar dados PCD geram logs em `public.logs_auditoria` com ações `VER_PCD` e `EDITAR_PCD`.
 
 
 ## 📅 Fase 4 — Grade de Horários (integração inicial)
-- Rota dedicada da supervisão: `/painel/supervisao/grade-de-horarios`.
+- Rota dedicada da supervisão: `/supervisao/grade-de-horarios`.
 - Persistência no Supabase com tabelas:
   - `public.grade_horarios`
   - `public.grade_horarios_itens`

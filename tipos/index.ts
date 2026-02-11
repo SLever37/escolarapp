@@ -16,7 +16,8 @@ export type NomeModulo =
   | 'patrimonio' 
   | 'biblioteca' 
   | 'auditoria_forense' 
-  | 'backup_institucional';
+  | 'backup_institucional'
+  | 'pcd';
 
 export interface Delegacao {
   moduloId: NomeModulo;

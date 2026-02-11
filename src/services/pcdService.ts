@@ -26,8 +26,8 @@ const contexto = async () => {
 
 export const podeVisualizarPCD = async (usuario: Usuario): Promise<boolean> => {
   if (usuario.papel === 'gestor' || usuario.papel === 'pedagogia') return true;
-  if (usuario.papel !== 'professor') return false;
-  if (!supabaseConfigurado) return false;
+  if (usuario.papel !== 'secretaria') return false;
+  if (!supabaseConfigurado) return usuario.delegacoes.some((d) => d.moduloId === 'pcd' && d.acoes.includes('ver'));
 
   try {
     const ctx = await contexto();

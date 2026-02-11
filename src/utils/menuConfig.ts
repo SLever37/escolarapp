@@ -1,4 +1,4 @@
-import { LucideIcon, Globe, ShieldCheck, Database, LayoutDashboard, KeyRound, BrainCircuit, FileText, UserSquare2, Users, School, MessageSquare } from 'lucide-react';
+import { LucideIcon, Globe, ShieldCheck, Database, LayoutDashboard, KeyRound, BrainCircuit, FileText, UserSquare2, Users, School, MessageSquare, Accessibility } from 'lucide-react';
 import { NomeModulo, PapelUsuario, Usuario } from '../../tipos';
 import { temPermissaoModulo } from './permissoes';
 
@@ -11,44 +11,44 @@ export interface ItemMenu {
 
 const MENU_POR_PERFIL: Record<PapelUsuario, ItemMenu[]> = {
   admin_plataforma: [
-    { para: '/painel/master', label: 'Painel Master', modulo: 'painel_estrategico', icone: Globe },
+    { para: '/master', label: 'Acesso Master', modulo: 'painel_estrategico', icone: Globe },
     { para: '/backup', label: 'Cópia de Segurança', modulo: 'backup_institucional', icone: Database },
     { para: '/auditoria', label: 'Auditoria', modulo: 'auditoria_forense', icone: ShieldCheck },
   ],
   gestor: [
-    { para: '/painel/gestor', label: 'Painel do Gestor', modulo: 'painel_estrategico', icone: LayoutDashboard },
+    { para: '/gestao', label: 'Painel do Gestor', modulo: 'painel_estrategico', icone: LayoutDashboard },
     { para: '/gestao-acessos', label: 'Gestão de Acessos', modulo: 'painel_estrategico', icone: KeyRound },
-    { para: '/pedagogia', label: 'Módulo Pedagógico', modulo: 'pedagogia_central', icone: BrainCircuit },
-    { para: '/secretaria', label: 'Módulo Secretaria', modulo: 'secretaria_legal', icone: FileText },
-    { para: '/portaria', label: 'Módulo Portaria', modulo: 'portaria_acesso', icone: School },
+    { para: '/supervisao', label: 'Supervisão e Pedagogia', modulo: 'pedagogia_central', icone: BrainCircuit },
+    { para: '/secretaria', label: 'Secretaria', modulo: 'secretaria_legal', icone: FileText },
+    { para: '/portaria', label: 'Portaria', modulo: 'portaria_acesso', icone: School },
     { para: '/mensagens', label: 'Mensageiro', modulo: 'painel_estrategico', icone: MessageSquare },
   ],
   pedagogia: [
-    { para: '/painel/supervisao', label: 'Painel da Supervisão', modulo: 'pedagogia_central', icone: BrainCircuit },
-    { para: '/pedagogia', label: 'Central Pedagógica', modulo: 'pedagogia_central', icone: BrainCircuit },
-    { para: '/painel/supervisao/grade-de-horarios', label: 'Grade de Horários', modulo: 'grade_horarios', icone: BrainCircuit },
+    { para: '/supervisao', label: 'Painel Supervisão/Pedagogia', modulo: 'pedagogia_central', icone: BrainCircuit },
+    { para: '/supervisao/grade-de-horarios', label: 'Grade de Horários', modulo: 'grade_horarios', icone: BrainCircuit },
+    { para: '/aluno/perfil', label: 'Aluno e PCD', modulo: 'pcd', icone: Accessibility },
     { para: '/mensagens', label: 'Mensageiro', modulo: 'pedagogia_central', icone: MessageSquare },
   ],
   secretaria: [
-    { para: '/painel/secretaria', label: 'Painel da Secretaria', modulo: 'secretaria_legal', icone: FileText },
-    { para: '/secretaria', label: 'Secretaria Legal', modulo: 'secretaria_legal', icone: FileText },
-    { para: '/mensagens', label: 'Mensageiro', modulo: 'secretaria_legal', icone: MessageSquare },
+    { para: '/secretaria', label: 'Secretaria', modulo: 'secretaria_legal', icone: FileText },
+    { para: '/familia', label: 'Portal da Família', modulo: 'portal_familia', icone: Users },
+    { para: '/aluno/perfil', label: 'Dados PCD (delegado)', modulo: 'pcd', icone: Accessibility },
   ],
   professor: [
-    { para: '/painel/professor', label: 'Painel do Professor', modulo: 'diario_classe', icone: UserSquare2 },
-    { para: '/professor', label: 'Diário de Classe', modulo: 'diario_classe', icone: UserSquare2 },
+    { para: '/professor', label: 'Painel do Professor', modulo: 'diario_classe', icone: UserSquare2 },
     { para: '/mensagens', label: 'Mensageiro', modulo: 'diario_classe', icone: MessageSquare },
   ],
   familia: [
-    { para: '/painel/familia', label: 'Painel da Família', modulo: 'portal_familia', icone: Users },
     { para: '/familia', label: 'Portal da Família', modulo: 'portal_familia', icone: Users },
   ],
   portaria: [
-    { para: '/painel/portaria', label: 'Painel da Portaria', modulo: 'portaria_acesso', icone: School },
-    { para: '/portaria', label: 'Controle de Portaria', modulo: 'portaria_acesso', icone: School },
+    { para: '/portaria', label: 'Portaria e Vigia', modulo: 'portaria_acesso', icone: School },
+    { para: '/portaria', label: 'Patrimônio (delegado)', modulo: 'patrimonio', icone: School },
   ],
   servicos_gerais: [
-    { para: '/painel/portaria', label: 'Painel Operacional', modulo: 'portaria_acesso', icone: School },
+    { para: '/portaria', label: 'Operações Delegadas', modulo: 'portaria_acesso', icone: School },
+    { para: '/portaria', label: 'Estoque Cozinha (delegado)', modulo: 'estoque_cozinha', icone: School },
+    { para: '/portaria', label: 'Patrimônio (delegado)', modulo: 'patrimonio', icone: School },
   ],
 };
 

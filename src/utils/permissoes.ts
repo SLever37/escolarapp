@@ -18,8 +18,9 @@ const matrizPermissoesBase: MatrizPermissao = {
     'biblioteca',
     'auditoria_forense',
     'backup_institucional',
+    'pcd',
   ],
-  pedagogia: ['pedagogia_central', 'grade_horarios', 'diario_classe'],
+  pedagogia: ['pedagogia_central', 'grade_horarios', 'diario_classe', 'pcd'],
   secretaria: ['secretaria_legal', 'portal_familia'],
   professor: ['diario_classe'],
   familia: ['portal_familia'],
@@ -34,13 +35,12 @@ export const temPermissaoModulo = (usuario: Usuario, modulo: NomeModulo, acao: A
   return Boolean(delegacao);
 };
 
-export const podeVerDadosPCD = (usuario: Usuario, autorizadoParaProfessor = false) => {
+export const podeVerDadosPCD = (usuario: Usuario) => {
   if (usuario.papel === 'gestor' || usuario.papel === 'pedagogia') return true;
-  if (usuario.papel === 'professor' && autorizadoParaProfessor) return true;
+  if (usuario.papel === 'secretaria') return temPermissaoModulo(usuario, 'pcd', 'ver');
   return false;
 };
 
 export const registrarLogSensivel = (usuario: Usuario, contexto: string) => {
-  // mock de auditoria LGPD
   console.info(`[LGPD-PCD] ${new Date().toISOString()} | ${usuario.nome} (${usuario.papel}) | ${contexto}`);
 };

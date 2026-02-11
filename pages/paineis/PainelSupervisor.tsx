@@ -9,7 +9,7 @@ const PainelSupervisor: React.FC = () => (
         <p className="text-xs font-black uppercase tracking-widest text-violet-600">Supervisão Pedagógica</p>
         <h3 className="text-lg font-black text-slate-900">Acesso rápido à Grade de Horários</h3>
       </div>
-      <Link to="/painel/supervisao/grade-de-horarios" className="bg-violet-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest">Abrir grade</Link>
+      <Link to="/supervisao/grade-de-horarios" className="bg-violet-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest">Abrir grade</Link>
     </div>
     <DashboardPedagogo />
   </div>

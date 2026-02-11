@@ -96,23 +96,29 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<Navigate to={rotaInicialPorPerfil(usuarioAtual.papel)} replace />} />
 
-              <Route path="/painel/master" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['admin_plataforma']}><PainelMaster /></GuardiaoDeRota>} />
-              <Route path="/painel/gestor" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor']}><DashboardGestor /></GuardiaoDeRota>} />
-              <Route path="/painel/supervisao" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['pedagogia']}><PainelSupervisor /></GuardiaoDeRota>} />
-              <Route path="/painel/secretaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['secretaria']}><PainelSecretaria /></GuardiaoDeRota>} />
-              <Route path="/painel/professor" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['professor']}><PainelProfessor /></GuardiaoDeRota>} />
-              <Route path="/painel/familia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['familia']}><PainelFamilia /></GuardiaoDeRota>} />
-              <Route path="/painel/portaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['portaria', 'servicos_gerais']}><PainelPortaria /></GuardiaoDeRota>} />
+              <Route path="/master" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['admin_plataforma']} moduloNecessario="painel_estrategico"><PainelMaster /></GuardiaoDeRota>} />
+              <Route path="/gestao" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor']} moduloNecessario="painel_estrategico"><DashboardGestor /></GuardiaoDeRota>} />
+              <Route path="/supervisao" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['pedagogia']} moduloNecessario="pedagogia_central"><PainelSupervisor /></GuardiaoDeRota>} />
+              <Route path="/secretaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['secretaria', 'gestor']} moduloNecessario="secretaria_legal"><PainelSecretaria /></GuardiaoDeRota>} />
+              <Route path="/professor" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['professor']} moduloNecessario="diario_classe"><PainelProfessor /></GuardiaoDeRota>} />
+              <Route path="/familia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['familia']} moduloNecessario="portal_familia"><PainelFamilia /></GuardiaoDeRota>} />
+              <Route path="/portaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['portaria', 'servicos_gerais']} moduloNecessario="portaria_acesso"><PainelPortaria /></GuardiaoDeRota>} />
 
-              <Route path="/gestao-acessos" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor']}><GestaoAcessos /></GuardiaoDeRota>} />
-              <Route path="/pedagogia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia']}><PedagogiaCentral /></GuardiaoDeRota>} />
-              <Route path="/painel/supervisao/grade-de-horarios" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['pedagogia']}><GradeDeHorarios /></GuardiaoDeRota>} />
-              <Route path="/secretaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'secretaria']}><SecretariaLegal /></GuardiaoDeRota>} />
-              <Route path="/professor" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['professor']}><DiarioProfessor /></GuardiaoDeRota>} />
-              <Route path="/familia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['familia', 'secretaria']}><PortalFamilia /></GuardiaoDeRota>} />
-              <Route path="/portaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['portaria', 'servicos_gerais']}><PortariaAcesso /></GuardiaoDeRota>} />
-              <Route path="/mensagens" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia', 'secretaria', 'professor']}><MensageiroCentral /></GuardiaoDeRota>} />
-              <Route path="/aluno/perfil" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia', 'professor']}><PerfilAlunoHub usuarioAtual={usuarioAtual} /></GuardiaoDeRota>} />
+              <Route path="/gestao-acessos" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor']} moduloNecessario="painel_estrategico"><GestaoAcessos /></GuardiaoDeRota>} />
+              <Route path="/supervisao/pedagogia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia']} moduloNecessario="pedagogia_central"><PedagogiaCentral /></GuardiaoDeRota>} />
+              <Route path="/supervisao/grade-de-horarios" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['pedagogia']} moduloNecessario="grade_horarios"><GradeDeHorarios /></GuardiaoDeRota>} />
+              <Route path="/secretaria/modulo" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'secretaria']} moduloNecessario="secretaria_legal"><SecretariaLegal /></GuardiaoDeRota>} />
+              <Route path="/professor/diario" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['professor']} moduloNecessario="diario_classe"><DiarioProfessor /></GuardiaoDeRota>} />
+              <Route path="/familia/portal" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['familia', 'secretaria']} moduloNecessario="portal_familia"><PortalFamilia /></GuardiaoDeRota>} />
+              <Route path="/portaria/controle" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['portaria', 'servicos_gerais']} moduloNecessario="portaria_acesso"><PortariaAcesso /></GuardiaoDeRota>} />
+              <Route path="/mensagens" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia', 'secretaria', 'professor']} moduloNecessario="painel_estrategico"><MensageiroCentral /></GuardiaoDeRota>} />
+              <Route path="/aluno/perfil" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia', 'secretaria']} moduloNecessario="pcd"><PerfilAlunoHub usuarioAtual={usuarioAtual} /></GuardiaoDeRota>} />
+
+              <Route path="/pedagogia" element={<Navigate to="/supervisao/pedagogia" replace />} />
+              <Route path="/secretaria-legal" element={<Navigate to="/secretaria/modulo" replace />} />
+              <Route path="/diario-professor" element={<Navigate to="/professor/diario" replace />} />
+              <Route path="/portal-familia" element={<Navigate to="/familia/portal" replace />} />
+              <Route path="/portaria-acesso" element={<Navigate to="/portaria/controle" replace />} />
 
               <Route path="/acesso-negado" element={<AcessoNegado />} />
               <Route path="*" element={<Navigate to={rotaInicialPorPerfil(usuarioAtual.papel)} replace />} />
