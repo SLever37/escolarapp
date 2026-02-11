@@ -21,6 +21,7 @@ export interface RestricaoAgenda {
 export interface RegrasGrade {
   cargaMaximaProfessorDia: number;
   restricoesAgenda: RestricaoAgenda[];
+  permitirSobreposicaoTurma: boolean;
 }
 
 export interface GradeHorario {
@@ -62,7 +63,7 @@ const contexto = async () => {
 
 const sobrepoe = (aIni: string, aFim: string, bIni: string, bFim: string) => aIni < bFim && bIni < aFim;
 const chaveConflito = (valor: string) => valor.trim().toLowerCase();
-const regraPadrao: RegrasGrade = { cargaMaximaProfessorDia: 6, restricoesAgenda: [] };
+const regraPadrao: RegrasGrade = { cargaMaximaProfessorDia: 6, restricoesAgenda: [], permitirSobreposicaoTurma: false };
 
 export const validarConflitosGrade = (itens: ItemGradeHorario[], regras: RegrasGrade = regraPadrao) => {
   const conflitos: string[] = [];
@@ -80,6 +81,9 @@ export const validarConflitosGrade = (itens: ItemGradeHorario[], regras: RegrasG
       if (a.dia_semana !== b.dia_semana) continue;
       if (!sobrepoe(a.horario_inicio, a.horario_fim, b.horario_inicio, b.horario_fim)) continue;
 
+      if (!regras.permitirSobreposicaoTurma) {
+        conflitos.push(`Conflito: turma com aulas sobrepostas (${a.dia_semana} ${a.horario_inicio}-${a.horario_fim} e ${b.horario_inicio}-${b.horario_fim}).`);
+      }
       if (chaveConflito(a.professor_id) && chaveConflito(a.professor_id) === chaveConflito(b.professor_id)) {
         conflitos.push(`Conflito: professor ${a.professor_id} em dois horários (${a.dia_semana} ${a.horario_inicio}-${a.horario_fim} e ${b.horario_inicio}-${b.horario_fim}).`);
       }
@@ -148,6 +152,9 @@ export const carregarGradePorTurma = async (turma: string): Promise<{ grade: Gra
 
 export const salvarGrade = async (grade: GradeHorario, regras: RegrasGrade = regraPadrao): Promise<{ sucesso: boolean; mensagem: string }> => {
   if (!grade.semana_ref.trim()) return { sucesso: false, mensagem: 'Informe a semana de referência da grade.' };
+
+  const itensIncompletos = grade.itens.find((item) => !item.disciplina.trim() || !item.professor_id.trim() || !item.sala.trim());
+  if (itensIncompletos) return { sucesso: false, mensagem: 'Toda aula precisa ter disciplina, professor e sala.' };
 
   const conflitos = validarConflitosGrade(grade.itens, regras);
   if (conflitos.length > 0) return { sucesso: false, mensagem: conflitos[0] };

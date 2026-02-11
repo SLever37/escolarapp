@@ -147,9 +147,11 @@ Com isso, os previews ficam no padrão:
   - `public.grade_horarios`
   - `public.grade_horarios_itens`
 - Validações de conflito implementadas no front:
+  - turma com aulas sobrepostas (bloqueio padrão)
   - professor em dois horários sobrepostos
   - sala duplicada no mesmo horário
   - faixa de horário inválida (início >= fim)
   - indisponibilidade de professor/sala por faixa de agenda
   - limite máximo diário de aulas por professor
+  - validação de preenchimento obrigatório (disciplina/professor/sala)
 - O bloqueio de salvar ocorre quando há conflitos detectados.
