@@ -120,3 +120,14 @@ Com isso, os previews ficam no padrão:
 2. Pegue o `id` do usuário em `auth.users`.
 3. No `public.usuarios`, preencha `auth_user_id` com esse mesmo `id`.
 4. Defina `papel`, `nivel` e `unidade_id`.
+
+
+## 🛡️ Fase 2 — Gestão de Acessos real (Supabase)
+- A página **Gestão de Acessos** agora permite delegação por **módulo + ação**:
+  - ações: ver, criar, editar, excluir, imprimir, exportar.
+- Presets disponíveis:
+  - Merendeira (Estoque da Cozinha)
+  - Vigia (Portaria + Patrimônio)
+  - Bibliotecário (Biblioteca)
+  - Almoxarife (Estoque Geral)
+- Ao salvar delegações, o sistema persiste em `public.delegacoes` e grava auditoria em `public.logs_auditoria` com `antes/depois`.
