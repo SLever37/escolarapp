@@ -12,6 +12,7 @@ import PortalFamilia from './pages/PortalFamilia';
 import PortariaAcesso from './pages/PortariaAcesso';
 import MensageiroCentral from './pages/MensageiroCentral';
 import PerfilAlunoHub from './pages/PerfilAlunoHub';
+import GradeDeHorarios from './pages/pedagogia/GradeDeHorarios';
 
 import PainelMaster from './pages/paineis/PainelMaster';
 import DashboardGestor from './pages/DashboardGestor';
@@ -105,6 +106,7 @@ const App: React.FC = () => {
 
               <Route path="/gestao-acessos" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor']}><GestaoAcessos /></GuardiaoDeRota>} />
               <Route path="/pedagogia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia']}><PedagogiaCentral /></GuardiaoDeRota>} />
+              <Route path="/painel/supervisao/grade-de-horarios" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['pedagogia']}><GradeDeHorarios /></GuardiaoDeRota>} />
               <Route path="/secretaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'secretaria']}><SecretariaLegal /></GuardiaoDeRota>} />
               <Route path="/professor" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['professor']}><DiarioProfessor /></GuardiaoDeRota>} />
               <Route path="/familia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['familia', 'secretaria']}><PortalFamilia /></GuardiaoDeRota>} />

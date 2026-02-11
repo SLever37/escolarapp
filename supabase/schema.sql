@@ -87,6 +87,30 @@ create table if not exists public.logs_auditoria (
   created_at timestamptz not null default now()
 );
 
+
+
+create table if not exists public.grade_horarios (
+  id uuid primary key default uuid_generate_v4(),
+  unidade_id uuid not null references public.unidades_escolares(id),
+  turma text not null,
+  semana_ref text not null,
+  versao integer not null default 1,
+  status text not null default 'rascunho',
+  created_at timestamptz not null default now(),
+  criado_por uuid references public.usuarios(id)
+);
+
+create table if not exists public.grade_horarios_itens (
+  id uuid primary key default uuid_generate_v4(),
+  grade_id uuid not null references public.grade_horarios(id) on delete cascade,
+  dia_semana text not null,
+  horario_inicio text not null,
+  horario_fim text not null,
+  disciplina text not null,
+  professor_id text not null,
+  sala text not null
+);
+
 create table if not exists public.alunos (
   id uuid primary key default uuid_generate_v4(),
   unidade_id uuid not null references public.unidades_escolares(id),
@@ -173,6 +197,8 @@ alter table public.logs_auditoria enable row level security;
 alter table public.alunos enable row level security;
 alter table public.alunos_pcd enable row level security;
 alter table public.permissoes_pcd enable row level security;
+alter table public.grade_horarios enable row level security;
+alter table public.grade_horarios_itens enable row level security;
 
 -- Políticas mínimas para desenvolvimento (apenas usuários autenticados)
 do $$
@@ -224,6 +250,20 @@ begin
     where schemaname = 'public' and tablename = 'permissoes_pcd' and policyname = 'auth_read_permissoes_pcd'
   ) then
     create policy "auth_read_permissoes_pcd" on public.permissoes_pcd for select to authenticated using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'grade_horarios' and policyname = 'auth_read_grade_horarios'
+  ) then
+    create policy "auth_read_grade_horarios" on public.grade_horarios for select to authenticated using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'grade_horarios_itens' and policyname = 'auth_read_grade_horarios_itens'
+  ) then
+    create policy "auth_read_grade_horarios_itens" on public.grade_horarios_itens for select to authenticated using (true);
   end if;
 end
 $$;

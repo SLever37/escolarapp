@@ -1,18 +1,74 @@
-
-import React, { useState } from 'react';
-import { 
-  Calendar, Clock, AlertTriangle, Settings2, 
-  Sparkles, Layout, ShieldAlert, History, Microscope,
-  RefreshCw, Save, CheckCircle2, ChevronRight
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Calendar, AlertTriangle, Settings2,
+  Layout, History, Save, PlusCircle
 } from 'lucide-react';
+import { carregarGradePorTurma, GradeHorario, ItemGradeHorario, salvarGrade, validarConflitosGrade } from '../../src/services/gradeHorariosService';
 
-const GradeDeHorarios = () => {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('TURMA');
+const TURMAS = ['8º Ano B', '9º Ano A', '7º Ano C'];
+const DIAS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX'];
 
-  const handleGenerate = () => {
-    setIsGenerating(true);
-    setTimeout(() => setIsGenerating(false), 2000);
+const novoItemPadrao: ItemGradeHorario = {
+  dia_semana: 'SEG',
+  horario_inicio: '07:00',
+  horario_fim: '07:50',
+  disciplina: '',
+  professor_id: '',
+  sala: '',
+};
+
+const GradeDeHorarios: React.FC = () => {
+  const [turma, setTurma] = useState(TURMAS[0]);
+  const [semanaRef, setSemanaRef] = useState('2026-S1');
+  const [gradeId, setGradeId] = useState<string | undefined>(undefined);
+  const [versao, setVersao] = useState(1);
+  const [status, setStatus] = useState<'rascunho' | 'publicada'>('rascunho');
+  const [itens, setItens] = useState<ItemGradeHorario[]>([]);
+  const [novoItem, setNovoItem] = useState<ItemGradeHorario>(novoItemPadrao);
+  const [statusBanco, setStatusBanco] = useState<'conectado' | 'local'>('local');
+  const [mensagem, setMensagem] = useState('');
+
+  useEffect(() => {
+    const carregar = async () => {
+      const { grade, conectado } = await carregarGradePorTurma(turma);
+      setGradeId(grade.id);
+      setVersao(grade.versao || 1);
+      setStatus(grade.status || 'rascunho');
+      setItens(grade.itens);
+      setSemanaRef(grade.semana_ref);
+      setStatusBanco(conectado ? 'conectado' : 'local');
+    };
+    carregar();
+  }, [turma]);
+
+  const conflitos = useMemo(() => validarConflitosGrade(itens), [itens]);
+
+  const adicionarItem = () => {
+    if (!novoItem.disciplina || !novoItem.professor_id || !novoItem.sala) {
+      setMensagem('Preencha disciplina, professor e sala antes de adicionar.');
+      return;
+    }
+    setItens((atual) => [...atual, novoItem]);
+    setNovoItem(novoItemPadrao);
+    setMensagem('Aula adicionada à grade.');
+  };
+
+  const removerItem = (indice: number) => {
+    setItens((atual) => atual.filter((_, i) => i !== indice));
+  };
+
+  const salvar = async () => {
+    const gradeParaSalvar: GradeHorario = {
+      id: gradeId,
+      unidade_id: 'auto',
+      turma,
+      semana_ref: semanaRef,
+      versao,
+      status,
+      itens,
+    };
+    const resultado = await salvarGrade(gradeParaSalvar);
+    setMensagem(resultado.mensagem);
   };
 
   return (
@@ -21,87 +77,88 @@ const GradeDeHorarios = () => {
         <div>
           <div className="flex items-center gap-2 text-violet-600 mb-2">
             <Calendar size={24} />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Módulo de Carga Horária Superior</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Supervisão Pedagógica</span>
           </div>
           <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Grade de Horários</h2>
-          <p className="text-slate-500 text-sm mt-1 font-medium">Motor heurístico de alocação de disciplinas e otimização de janelas docentes.</p>
+          <p className="text-slate-500 text-sm mt-1 font-medium">Editor com validações de conflito (professor e sala) e persistência de versões.</p>
         </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={handleGenerate}
-            className="bg-violet-600 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-200 hover:bg-violet-700 transition-all flex items-center gap-2"
-          >
-            {isGenerating ? <RefreshCw className="animate-spin" size={16} /> : <Sparkles size={16} />}
-            {isGenerating ? 'Calculando Malha...' : 'Gerar Grade Global'}
+        <div className="flex flex-col items-end gap-2">
+          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusBanco === 'conectado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+            {statusBanco === 'conectado' ? 'Banco conectado' : 'Modo local'}
+          </span>
+          <button onClick={salvar} disabled={conflitos.length > 0} className="bg-violet-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-200 hover:bg-violet-700 transition-all flex items-center gap-2">
+            <Save size={16} /> Salvar grade
           </button>
         </div>
       </header>
 
-      {/* Navegação de Submódulos */}
+      <section className="bg-white p-6 rounded-[2rem] border border-slate-200 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <select value={turma} onChange={(e) => setTurma(e.target.value)} className="px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium">
+            {TURMAS.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input value={semanaRef} onChange={(e) => setSemanaRef(e.target.value)} className="px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Semana (ex: 2026-S1)" />
+          <div className="text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">Conflitos atuais: <span className="text-rose-600">{conflitos.length}</span></div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
+          <select value={novoItem.dia_semana} onChange={(e) => setNovoItem({ ...novoItem, dia_semana: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium">
+            {DIAS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <input type="time" value={novoItem.horario_inicio} onChange={(e) => setNovoItem({ ...novoItem, horario_inicio: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium" />
+          <input type="time" value={novoItem.horario_fim} onChange={(e) => setNovoItem({ ...novoItem, horario_fim: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium" />
+          <input value={novoItem.disciplina} onChange={(e) => setNovoItem({ ...novoItem, disciplina: e.target.value })} placeholder="Disciplina" className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium" />
+          <input value={novoItem.professor_id} onChange={(e) => setNovoItem({ ...novoItem, professor_id: e.target.value })} placeholder="Professor" className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium" />
+          <input value={novoItem.sala} onChange={(e) => setNovoItem({ ...novoItem, sala: e.target.value })} placeholder="Sala" className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium" />
+          <button onClick={adicionarItem} className="bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1"><PlusCircle size={14} />Adicionar</button>
+        </div>
+      </section>
+
+      {conflitos.length > 0 && (
+        <section className="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-2 text-rose-700"><AlertTriangle size={16} /><span className="font-black text-sm">Conflitos detectados</span></div>
+          <ul className="text-xs text-rose-700 list-disc ml-5 space-y-1">
+            {conflitos.map((c, i) => <li key={i}>{c}</li>)}
+          </ul>
+        </section>
+      )}
+
+      <section className="bg-white p-6 rounded-[2rem] border border-slate-200 overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="p-3 text-left font-black uppercase tracking-widest text-slate-500">Dia</th>
+              <th className="p-3 text-left font-black uppercase tracking-widest text-slate-500">Início</th>
+              <th className="p-3 text-left font-black uppercase tracking-widest text-slate-500">Fim</th>
+              <th className="p-3 text-left font-black uppercase tracking-widest text-slate-500">Disciplina</th>
+              <th className="p-3 text-left font-black uppercase tracking-widest text-slate-500">Professor</th>
+              <th className="p-3 text-left font-black uppercase tracking-widest text-slate-500">Sala</th>
+              <th className="p-3" />
+            </tr>
+          </thead>
+          <tbody>
+            {itens.map((item, idx) => (
+              <tr key={`${item.dia_semana}-${item.horario_inicio}-${idx}`} className="border-t border-slate-100">
+                <td className="p-3 font-bold text-slate-700">{item.dia_semana}</td>
+                <td className="p-3">{item.horario_inicio}</td>
+                <td className="p-3">{item.horario_fim}</td>
+                <td className="p-3">{item.disciplina}</td>
+                <td className="p-3">{item.professor_id}</td>
+                <td className="p-3">{item.sala}</td>
+                <td className="p-3 text-right"><button onClick={() => removerItem(idx)} className="text-rose-600 font-black">Remover</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      {mensagem && <div className="text-sm font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">{mensagem}</div>}
+
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <GradeNavButton label="Editor Manual" icon={<Layout />} />
-        <GradeNavButton label="Diagnóstico" icon={<ShieldAlert />} badge="3" />
-        <GradeNavButton label="Regras MEC" icon={<Settings2 />} />
-        <GradeNavButton label="Simulador" icon={<Microscope />} />
+        <GradeNavButton label="Diagnóstico" icon={<AlertTriangle />} badge={`${conflitos.length}`} />
+        <GradeNavButton label="Regras" icon={<Settings2 />} />
         <GradeNavButton label="Histórico" icon={<History />} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Painel de Saúde da Grade */}
-        <div className="lg:col-span-3 space-y-4">
-           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Saúde da Grade 2024.1</h3>
-           <HealthCard label="Conformidade MEC" value="94.2%" color="emerald" />
-           <HealthCard label="Conflitos Ativos" value="03" color="rose" />
-           <HealthCard label="Aulas Alocadas" value="340 / 340" color="blue" />
-        </div>
-
-        {/* Grade Visual (Mock) */}
-        <div className="lg:col-span-9 bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm overflow-x-auto min-h-[500px]">
-           <div className="flex items-center justify-between mb-10">
-              <h4 className="text-xl font-black text-slate-800 uppercase tracking-tighter leading-none">Visão por Turma: 8º Ano B</h4>
-              <div className="flex gap-2 bg-slate-50 p-1 rounded-xl">
-                 <button className="px-4 py-2 text-[10px] font-black uppercase text-blue-600 bg-white shadow-sm rounded-lg">SEG-SEX</button>
-                 <button className="px-4 py-2 text-[10px] font-black uppercase text-slate-400">SÁBADO</button>
-              </div>
-           </div>
-
-           <table className="w-full border-separate border-spacing-2">
-              <thead>
-                <tr>
-                   <th className="w-20"></th>
-                   {['SEG', 'TER', 'QUA', 'QUI', 'SEX'].map(dia => (
-                     <th key={dia} className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pb-4">{dia}</th>
-                   ))}
-                </tr>
-              </thead>
-              <tbody>
-                 {[1, 2, 3, 4, 5].map(h => (
-                   <tr key={h}>
-                      <td className="text-center">
-                         <span className="text-[10px] font-black text-slate-400 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl">{h}º Hor.</span>
-                      </td>
-                      {[1, 2, 3, 4, 5].map(d => (
-                        <td key={d}>
-                           <div className={`p-4 rounded-2xl border min-h-[70px] flex flex-col justify-center transition-all cursor-pointer hover:shadow-lg ${h === 2 && d === 3 ? 'bg-rose-50 border-rose-200 shadow-inner' : 'bg-slate-50/50 border-slate-100 hover:bg-white hover:border-blue-100'}`}>
-                              {h === 2 && d === 3 ? (
-                                <div className="flex flex-col items-center gap-1">
-                                   <AlertTriangle size={14} className="text-rose-500" />
-                                   <span className="text-[8px] font-black text-rose-600 uppercase">Conflito</span>
-                                </div>
-                              ) : (
-                                <>
-                                  <span className="text-[11px] font-black text-slate-800 leading-none mb-1">MATEMÁTICA</span>
-                                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter truncate">Prof. Marcos V.</span>
-                                </>
-                              )}
-                           </div>
-                        </td>
-                      ))}
-                   </tr>
-                 ))}
-              </tbody>
-           </table>
-        </div>
       </div>
     </div>
   );
@@ -116,19 +173,5 @@ const GradeNavButton = ({ label, icon, badge }: any) => (
     {badge && <span className="absolute top-4 right-4 bg-rose-500 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-lg">{badge}</span>}
   </button>
 );
-
-const HealthCard = ({ label, value, color }: any) => {
-  const styles: any = {
-    emerald: 'border-emerald-500 text-emerald-600 bg-emerald-50/30',
-    rose: 'border-rose-500 text-rose-600 bg-rose-50/30',
-    blue: 'border-blue-500 text-blue-600 bg-blue-50/30'
-  };
-  return (
-    <div className={`p-6 rounded-3xl border-l-4 ${styles[color]} bg-white shadow-sm`}>
-       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">{label}</p>
-       <p className="text-2xl font-black text-slate-900 tracking-tighter">{value}</p>
-    </div>
-  );
-};
 
 export default GradeDeHorarios;

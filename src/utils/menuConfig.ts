@@ -26,6 +26,7 @@ const MENU_POR_PERFIL: Record<PapelUsuario, ItemMenu[]> = {
   pedagogia: [
     { para: '/painel/supervisao', label: 'Painel da Supervisão', modulo: 'pedagogia_central', icone: BrainCircuit },
     { para: '/pedagogia', label: 'Central Pedagógica', modulo: 'pedagogia_central', icone: BrainCircuit },
+    { para: '/painel/supervisao/grade-de-horarios', label: 'Grade de Horários', modulo: 'grade_horarios', icone: BrainCircuit },
     { para: '/mensagens', label: 'Mensageiro', modulo: 'pedagogia_central', icone: MessageSquare },
   ],
   secretaria: [

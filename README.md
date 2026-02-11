@@ -139,3 +139,14 @@ Com isso, os previews ficam no padrão:
   - Gestor e Supervisão/Pedagogia: acesso completo.
   - Professor: acesso somente quando autorizado em `permissoes_pcd`.
 - Ações de visualizar/editar dados PCD geram logs em `public.logs_auditoria` com ações `VER_PCD` e `EDITAR_PCD`.
+
+
+## 📅 Fase 4 — Grade de Horários (integração inicial)
+- Rota dedicada da supervisão: `/painel/supervisao/grade-de-horarios`.
+- Persistência no Supabase com tabelas:
+  - `public.grade_horarios`
+  - `public.grade_horarios_itens`
+- Validações de conflito implementadas no front:
+  - professor em dois horários sobrepostos
+  - sala duplicada no mesmo horário
+- O bloqueio de salvar ocorre quando há conflitos detectados.
