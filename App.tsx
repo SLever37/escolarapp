@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Bell, Search, Building2 } from 'lucide-react';
 
@@ -24,57 +24,34 @@ import PainelPortaria from './pages/paineis/PainelPortaria';
 import NavegacaoLateral from './componentes/NavegacaoLateral';
 import GuardiaoDeRota from './components/roteamento/GuardiaoDeRota';
 
-import { Usuario, PapelUsuario } from './tipos';
+import { PapelUsuario } from './tipos';
 import { rotaInicialPorPerfil } from './src/utils/perfis';
+import { useSessaoPerfil } from './src/features/auth/useSessaoPerfil';
+
+const PERFIS_DEV: PapelUsuario[] = ['admin_plataforma', 'gestor', 'pedagogia', 'secretaria', 'professor', 'familia', 'portaria', 'servicos_gerais'];
 
 const App: React.FC = () => {
-  const [estaAutenticado, setEstaAutenticado] = useState(false);
-  const [usuarioAtual, setUsuarioAtual] = useState<Usuario | null>(null);
+  const {
+    carregando,
+    sessaoAtiva,
+    usuarioAtual,
+    entrar,
+    sair,
+    supabaseConfigurado,
+    trocarPerfilDev,
+  } = useSessaoPerfil();
 
-  const lidarComLogin = (papel: PapelUsuario) => {
-    const mockUsuarios: Record<PapelUsuario, Usuario> = {
-      admin_plataforma: {
-        id: 'u-master', nome: 'Administrador Master', cpf: '000.000.000-00', papel: 'admin_plataforma', unidade: 'Plataforma Central', delegacoes: [],
-      },
-      gestor: {
-        id: 'u-gestor', nome: 'Dr. Roberto Magalhães', cpf: '111.111.111-11', papel: 'gestor', unidade: 'E.M. Presidente Vargas', delegacoes: [],
-      },
-      pedagogia: {
-        id: 'u-ped', nome: 'Coordenação Pedagógica', cpf: '222.222.222-22', papel: 'pedagogia', unidade: 'E.M. Presidente Vargas', delegacoes: [],
-      },
-      secretaria: {
-        id: 'u-sec', nome: 'Equipe da Secretaria', cpf: '333.333.333-33', papel: 'secretaria', unidade: 'E.M. Presidente Vargas', delegacoes: [],
-      },
-      professor: {
-        id: 'u-prof', nome: 'Prof. Ricardo Santos', cpf: '444.444.444-44', papel: 'professor', unidade: 'E.M. Presidente Vargas', delegacoes: [],
-      },
-      familia: {
-        id: 'u-fam', nome: 'Responsável Familiar', cpf: '555.555.555-55', papel: 'familia', unidade: 'E.M. Presidente Vargas', delegacoes: [],
-      },
-      portaria: {
-        id: 'u-port', nome: 'Portaria Escolar', cpf: '666.666.666-66', papel: 'portaria', unidade: 'E.M. Presidente Vargas', delegacoes: [],
-      },
-      servicos_gerais: {
-        id: 'u-serv', nome: 'Serviços Gerais', cpf: '777.777.777-77', papel: 'servicos_gerais', unidade: 'E.M. Presidente Vargas', delegacoes: [],
-      },
-    };
+  if (carregando) {
+    return <div className="h-screen flex items-center justify-center text-slate-500 font-bold">Carregando sessão...</div>;
+  }
 
-    setUsuarioAtual(mockUsuarios[papel]);
-    setEstaAutenticado(true);
-  };
-
-  const lidarComLogoff = () => {
-    setEstaAutenticado(false);
-    setUsuarioAtual(null);
-  };
-
-  if (!estaAutenticado || !usuarioAtual) {
-    return <Login aoLogar={lidarComLogin} />;
+  if (!sessaoAtiva || !usuarioAtual) {
+    return <Login aoEntrar={entrar} supabaseConfigurado={supabaseConfigurado} />;
   }
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-inter">
-      <NavegacaoLateral usuario={usuarioAtual} aoSair={lidarComLogoff} />
+      <NavegacaoLateral usuario={usuarioAtual} aoSair={sair} />
 
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 shrink-0 z-40">
@@ -86,6 +63,18 @@ const App: React.FC = () => {
                 <span className="text-xs font-bold text-slate-700">{usuarioAtual.unidade}</span>
               </div>
             </div>
+
+            {import.meta.env.DEV && (
+              <select
+                value={usuarioAtual.papel}
+                onChange={(e) => trocarPerfilDev(e.target.value as PapelUsuario)}
+                className="text-[10px] font-black uppercase border border-blue-100 bg-blue-50 text-blue-700 rounded-xl px-3 py-2"
+              >
+                {PERFIS_DEV.map((perfil) => (
+                  <option key={perfil} value={perfil}>{perfil.replace('_', ' ')}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="flex items-center gap-6">
@@ -118,8 +107,8 @@ const App: React.FC = () => {
               <Route path="/pedagogia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia']}><PedagogiaCentral /></GuardiaoDeRota>} />
               <Route path="/secretaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'secretaria']}><SecretariaLegal /></GuardiaoDeRota>} />
               <Route path="/professor" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['professor']}><DiarioProfessor /></GuardiaoDeRota>} />
-              <Route path="/familia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['familia', 'secretaria', 'gestor']}><PortalFamilia /></GuardiaoDeRota>} />
-              <Route path="/portaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'portaria', 'servicos_gerais']}><PortariaAcesso /></GuardiaoDeRota>} />
+              <Route path="/familia" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['familia', 'secretaria']}><PortalFamilia /></GuardiaoDeRota>} />
+              <Route path="/portaria" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['portaria', 'servicos_gerais']}><PortariaAcesso /></GuardiaoDeRota>} />
               <Route path="/mensagens" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia', 'secretaria', 'professor']}><MensageiroCentral /></GuardiaoDeRota>} />
               <Route path="/aluno/perfil" element={<GuardiaoDeRota usuario={usuarioAtual} perfisPermitidos={['gestor', 'pedagogia']}><PerfilAlunoHub /></GuardiaoDeRota>} />
 

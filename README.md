@@ -107,3 +107,16 @@ Com isso, os previews ficam no padrão:
 
 
 ⚠️ Nunca comite chaves reais no repositório. Use `.env.local` no ambiente local e variáveis de ambiente no Cloudflare Pages.
+
+## 🔐 Autenticação e sessão (Supabase)
+- O login usa autenticação real via Supabase Auth (`signInWithPassword` no endpoint Auth).
+- A sessão é persistida no navegador e reutilizada ao recarregar a página.
+- O perfil institucional é carregado da tabela `public.usuarios` pelo campo `auth_user_id`.
+- As delegações do usuário são carregadas da tabela `public.delegacoes`.
+- Em ambiente DEV, sem Supabase configurado, o sistema mantém modo mock para testes de perfil.
+
+### Vincular usuário Auth ao perfil institucional
+1. Crie o usuário no Supabase Auth.
+2. Pegue o `id` do usuário em `auth.users`.
+3. No `public.usuarios`, preencha `auth_user_id` com esse mesmo `id`.
+4. Defina `papel`, `nivel` e `unidade_id`.

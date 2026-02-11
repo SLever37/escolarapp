@@ -1,37 +1,29 @@
 import React, { useState } from 'react';
-import { GraduationCap, ShieldCheck, ArrowRight, Lock, User as IconeUsuario } from 'lucide-react';
-import { PapelUsuario } from '../tipos';
+import { GraduationCap, ShieldCheck, ArrowRight, Lock, User as IconeUsuario, AlertCircle } from 'lucide-react';
 
 interface LoginProps {
-  aoLogar: (papel: PapelUsuario) => void;
+  aoEntrar: (email: string, senha: string) => Promise<void>;
+  supabaseConfigurado: boolean;
 }
 
-const Login: React.FC<LoginProps> = ({ aoLogar }) => {
+const Login: React.FC<LoginProps> = ({ aoEntrar, supabaseConfigurado }) => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
-  const lidarComEnvio = (e: React.FormEvent) => {
+  const lidarComEnvio = async (e: React.FormEvent) => {
     e.preventDefault();
     setCarregando(true);
+    setErro(null);
 
-    setTimeout(() => {
-      const emailNormalizado = email.trim().toLowerCase();
-      const senhaNormalizada = senha.trim();
-
-      // Acesso master enraizado
-      if (emailNormalizado === 'socrates.lever@gmail.com' && senhaNormalizada === '123456') aoLogar('admin_plataforma');
-      else if (emailNormalizado.startsWith('master')) aoLogar('admin_plataforma');
-      else if (emailNormalizado.startsWith('gestor')) aoLogar('gestor');
-      else if (emailNormalizado.startsWith('prof')) aoLogar('professor');
-      else if (emailNormalizado.startsWith('sec')) aoLogar('secretaria');
-      else if (emailNormalizado.startsWith('ped')) aoLogar('pedagogia');
-      else if (emailNormalizado.startsWith('familia') || emailNormalizado.startsWith('cpf')) aoLogar('familia');
-      else if (emailNormalizado.startsWith('vigia') || emailNormalizado.startsWith('port')) aoLogar('portaria');
-      else aoLogar('professor');
-
+    try {
+      await aoEntrar(email.trim(), senha.trim());
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Falha ao autenticar.');
+    } finally {
       setCarregando(false);
-    }, 800);
+    }
   };
 
   return (
@@ -41,13 +33,26 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
 
       <div className="w-full max-w-md relative z-10">
         <div className="bg-white p-10 md:p-12 rounded-[3.5rem] shadow-2xl shadow-blue-900/10 border border-slate-100">
-          <div className="flex flex-col items-center mb-10">
+          <div className="flex flex-col items-center mb-8">
             <div className="bg-blue-600 p-4 rounded-3xl shadow-xl shadow-blue-200 mb-6">
               <GraduationCap className="text-white w-10 h-10" />
             </div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tighter text-center">EscolarApp</h1>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mt-2">Plataforma de Governança</p>
           </div>
+
+          {!supabaseConfigurado && (
+            <div className="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-[11px] font-bold">
+              Modo DEV ativo: Supabase não configurado. O login usará perfil mock por prefixo de e-mail.
+            </div>
+          )}
+
+          {erro && (
+            <div className="mb-5 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-[11px] font-bold flex items-start gap-2">
+              <AlertCircle size={16} className="mt-0.5" />
+              <span>{erro}</span>
+            </div>
+          )}
 
           <form onSubmit={lidarComEnvio} className="space-y-6">
             <div className="space-y-2">
@@ -105,15 +110,6 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
               Sistema restrito a profissionais e famílias autorizadas. <br />
               Monitoramento forense ativo.
             </p>
-          </div>
-
-          <div className="mt-4 text-center">
-            <p className="text-[9px] font-bold text-slate-400 uppercase">Perfis de teste:</p>
-            <div className="flex flex-wrap justify-center gap-2 mt-1">
-              {['socrates.lever@gmail.com / 123456', 'master@...', 'gestor@...', 'ped@...', 'sec@...', 'prof@...', 'cpf@...', 'vigia@...'].map((credencial) => (
-                <span key={credencial} className="text-[9px] bg-slate-100 px-2 py-1 rounded">{credencial}</span>
-              ))}
-            </div>
           </div>
         </div>
       </div>
