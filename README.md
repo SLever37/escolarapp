@@ -162,3 +162,5 @@ Com isso, os previews ficam no padrão:
 - Serviço tenta RPC atômica (`salvar_grade_horario_atomico`) e usa fallback REST quando indisponível.
 - Relatório de modelagem recomendada para evolução SQL: `docs/relatorio-tabelas-grade-avancada.md`.
 - Check automatizado sem dependências externas para o motor de regras: `npm run test:grade-rules`.
+- Validação consolidada da fase (regras + build): `npm run check:ready`.
+- Status de finalização e critérios de aceite: `docs/status-finalizacao-fase4.md`.
