@@ -149,4 +149,7 @@ Com isso, os previews ficam no padrão:
 - Validações de conflito implementadas no front:
   - professor em dois horários sobrepostos
   - sala duplicada no mesmo horário
+  - faixa de horário inválida (início >= fim)
+  - indisponibilidade de professor/sala por faixa de agenda
+  - limite máximo diário de aulas por professor
 - O bloqueio de salvar ocorre quando há conflitos detectados.

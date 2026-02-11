@@ -3,7 +3,15 @@ import {
   Calendar, AlertTriangle, Settings2,
   Layout, History, Save, PlusCircle
 } from 'lucide-react';
-import { carregarGradePorTurma, GradeHorario, ItemGradeHorario, salvarGrade, validarConflitosGrade } from '../../src/services/gradeHorariosService';
+import {
+  carregarGradePorTurma,
+  GradeHorario,
+  ItemGradeHorario,
+  RegrasGrade,
+  RestricaoAgenda,
+  salvarGrade,
+  validarConflitosGrade,
+} from '../../src/services/gradeHorariosService';
 
 const TURMAS = ['8º Ano B', '9º Ano A', '7º Ano C'];
 const DIAS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX'];
@@ -17,6 +25,14 @@ const novoItemPadrao: ItemGradeHorario = {
   sala: '',
 };
 
+const novaRestricaoPadrao: RestricaoAgenda = {
+  recurso_tipo: 'professor',
+  recurso_id: '',
+  dia_semana: 'SEG',
+  horario_inicio: '07:00',
+  horario_fim: '07:50',
+};
+
 const GradeDeHorarios: React.FC = () => {
   const [turma, setTurma] = useState(TURMAS[0]);
   const [semanaRef, setSemanaRef] = useState('2026-S1');
@@ -27,6 +43,8 @@ const GradeDeHorarios: React.FC = () => {
   const [novoItem, setNovoItem] = useState<ItemGradeHorario>(novoItemPadrao);
   const [statusBanco, setStatusBanco] = useState<'conectado' | 'local'>('local');
   const [mensagem, setMensagem] = useState('');
+  const [regras, setRegras] = useState<RegrasGrade>({ cargaMaximaProfessorDia: 6, restricoesAgenda: [] });
+  const [novaRestricao, setNovaRestricao] = useState<RestricaoAgenda>(novaRestricaoPadrao);
 
   useEffect(() => {
     const carregar = async () => {
@@ -41,7 +59,7 @@ const GradeDeHorarios: React.FC = () => {
     carregar();
   }, [turma]);
 
-  const conflitos = useMemo(() => validarConflitosGrade(itens), [itens]);
+  const conflitos = useMemo(() => validarConflitosGrade(itens, regras), [itens, regras]);
 
   const adicionarItem = () => {
     if (!novoItem.disciplina || !novoItem.professor_id || !novoItem.sala) {
@@ -57,6 +75,27 @@ const GradeDeHorarios: React.FC = () => {
     setItens((atual) => atual.filter((_, i) => i !== indice));
   };
 
+  const adicionarRestricao = () => {
+    if (!novaRestricao.recurso_id.trim()) {
+      setMensagem('Informe o professor/sala da indisponibilidade.');
+      return;
+    }
+    if (novaRestricao.horario_inicio >= novaRestricao.horario_fim) {
+      setMensagem('A indisponibilidade precisa ter início menor que fim.');
+      return;
+    }
+    setRegras((atual) => ({ ...atual, restricoesAgenda: [...atual.restricoesAgenda, novaRestricao] }));
+    setNovaRestricao(novaRestricaoPadrao);
+    setMensagem('Restrição de agenda adicionada.');
+  };
+
+  const removerRestricao = (indice: number) => {
+    setRegras((atual) => ({
+      ...atual,
+      restricoesAgenda: atual.restricoesAgenda.filter((_, i) => i !== indice),
+    }));
+  };
+
   const salvar = async () => {
     const gradeParaSalvar: GradeHorario = {
       id: gradeId,
@@ -67,7 +106,7 @@ const GradeDeHorarios: React.FC = () => {
       status,
       itens,
     };
-    const resultado = await salvarGrade(gradeParaSalvar);
+    const resultado = await salvarGrade(gradeParaSalvar, regras);
     setMensagem(resultado.mensagem);
   };
 
@@ -80,7 +119,7 @@ const GradeDeHorarios: React.FC = () => {
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Supervisão Pedagógica</span>
           </div>
           <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Grade de Horários</h2>
-          <p className="text-slate-500 text-sm mt-1 font-medium">Editor com validações de conflito (professor e sala) e persistência de versões.</p>
+          <p className="text-slate-500 text-sm mt-1 font-medium">Editor com conflitos de professor/sala, indisponibilidades e carga máxima diária por professor.</p>
         </div>
         <div className="flex flex-col items-end gap-2">
           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusBanco === 'conectado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
@@ -112,6 +151,48 @@ const GradeDeHorarios: React.FC = () => {
           <input value={novoItem.sala} onChange={(e) => setNovoItem({ ...novoItem, sala: e.target.value })} placeholder="Sala" className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium" />
           <button onClick={adicionarItem} className="bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1"><PlusCircle size={14} />Adicionar</button>
         </div>
+      </section>
+
+      <section className="bg-white p-6 rounded-[2rem] border border-slate-200 space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h3 className="text-sm font-black uppercase tracking-widest text-slate-700">Regras adicionais</h3>
+          <label className="text-xs font-bold text-slate-600 flex items-center gap-2">
+            Carga máx. aulas/professor/dia
+            <input
+              type="number"
+              min={1}
+              max={12}
+              value={regras.cargaMaximaProfessorDia}
+              onChange={(e) => setRegras((atual) => ({ ...atual, cargaMaximaProfessorDia: Number(e.target.value || 0) }))}
+              className="w-16 px-2 py-1 rounded-lg border border-slate-300"
+            />
+          </label>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
+          <select value={novaRestricao.recurso_tipo} onChange={(e) => setNovaRestricao({ ...novaRestricao, recurso_tipo: e.target.value as 'professor' | 'sala' })} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium">
+            <option value="professor">Professor</option>
+            <option value="sala">Sala</option>
+          </select>
+          <input value={novaRestricao.recurso_id} onChange={(e) => setNovaRestricao({ ...novaRestricao, recurso_id: e.target.value })} placeholder="ID recurso" className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium" />
+          <select value={novaRestricao.dia_semana} onChange={(e) => setNovaRestricao({ ...novaRestricao, dia_semana: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium">
+            {DIAS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <input type="time" value={novaRestricao.horario_inicio} onChange={(e) => setNovaRestricao({ ...novaRestricao, horario_inicio: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium" />
+          <input type="time" value={novaRestricao.horario_fim} onChange={(e) => setNovaRestricao({ ...novaRestricao, horario_fim: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium" />
+          <button onClick={adicionarRestricao} className="md:col-span-2 bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1">Adicionar indisponibilidade</button>
+        </div>
+
+        {regras.restricoesAgenda.length > 0 && (
+          <ul className="space-y-2">
+            {regras.restricoesAgenda.map((r, i) => (
+              <li key={`${r.recurso_tipo}-${r.recurso_id}-${i}`} className="flex items-center justify-between text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                <span className="font-semibold text-slate-700">{r.recurso_tipo} {r.recurso_id} indisponível em {r.dia_semana} {r.horario_inicio}-{r.horario_fim}</span>
+                <button onClick={() => removerRestricao(i)} className="text-rose-600 font-black">Remover</button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {conflitos.length > 0 && (
@@ -157,7 +238,7 @@ const GradeDeHorarios: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <GradeNavButton label="Editor Manual" icon={<Layout />} />
         <GradeNavButton label="Diagnóstico" icon={<AlertTriangle />} badge={`${conflitos.length}`} />
-        <GradeNavButton label="Regras" icon={<Settings2 />} />
+        <GradeNavButton label="Regras" icon={<Settings2 />} badge={`${regras.restricoesAgenda.length}`} />
         <GradeNavButton label="Histórico" icon={<History />} />
       </div>
     </div>

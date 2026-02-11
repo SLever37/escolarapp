@@ -10,6 +10,19 @@ export interface ItemGradeHorario {
   sala: string;
 }
 
+export interface RestricaoAgenda {
+  recurso_tipo: 'professor' | 'sala';
+  recurso_id: string;
+  dia_semana: string;
+  horario_inicio: string;
+  horario_fim: string;
+}
+
+export interface RegrasGrade {
+  cargaMaximaProfessorDia: number;
+  restricoesAgenda: RestricaoAgenda[];
+}
+
 export interface GradeHorario {
   id?: string;
   unidade_id: string;
@@ -49,9 +62,16 @@ const contexto = async () => {
 
 const sobrepoe = (aIni: string, aFim: string, bIni: string, bFim: string) => aIni < bFim && bIni < aFim;
 const chaveConflito = (valor: string) => valor.trim().toLowerCase();
+const regraPadrao: RegrasGrade = { cargaMaximaProfessorDia: 6, restricoesAgenda: [] };
 
-export const validarConflitosGrade = (itens: ItemGradeHorario[]) => {
+export const validarConflitosGrade = (itens: ItemGradeHorario[], regras: RegrasGrade = regraPadrao) => {
   const conflitos: string[] = [];
+
+  itens.forEach((item) => {
+    if (!item.horario_inicio || !item.horario_fim || item.horario_inicio >= item.horario_fim) {
+      conflitos.push(`Conflito: faixa de horário inválida para ${item.disciplina || 'aula sem disciplina'} (${item.dia_semana} ${item.horario_inicio || '--:--'}-${item.horario_fim || '--:--'}).`);
+    }
+  });
 
   for (let i = 0; i < itens.length; i++) {
     for (let j = i + 1; j < itens.length; j++) {
@@ -67,6 +87,37 @@ export const validarConflitosGrade = (itens: ItemGradeHorario[]) => {
         conflitos.push(`Conflito: sala ${a.sala} duplicada (${a.dia_semana} ${a.horario_inicio}-${a.horario_fim} e ${b.horario_inicio}-${b.horario_fim}).`);
       }
     }
+  }
+
+  regras.restricoesAgenda.forEach((restricao) => {
+    const alvo = itens.filter((item) => {
+      if (item.dia_semana !== restricao.dia_semana) return false;
+      if (!sobrepoe(item.horario_inicio, item.horario_fim, restricao.horario_inicio, restricao.horario_fim)) return false;
+
+      return restricao.recurso_tipo === 'professor'
+        ? chaveConflito(item.professor_id) === chaveConflito(restricao.recurso_id)
+        : chaveConflito(item.sala) === chaveConflito(restricao.recurso_id);
+    });
+
+    if (alvo.length > 0) {
+      conflitos.push(`Conflito: ${restricao.recurso_tipo} ${restricao.recurso_id} indisponível em ${restricao.dia_semana} ${restricao.horario_inicio}-${restricao.horario_fim}.`);
+    }
+  });
+
+  const cargaPorProfessorDia = new Map<string, number>();
+  itens.forEach((item) => {
+    const professor = chaveConflito(item.professor_id);
+    if (!professor) return;
+    const chave = `${professor}_${item.dia_semana}`;
+    cargaPorProfessorDia.set(chave, (cargaPorProfessorDia.get(chave) || 0) + 1);
+  });
+
+  if (regras.cargaMaximaProfessorDia > 0) {
+    cargaPorProfessorDia.forEach((total, chave) => {
+      if (total <= regras.cargaMaximaProfessorDia) return;
+      const [professor, dia] = chave.split('_');
+      conflitos.push(`Conflito: professor ${professor} excedeu limite diário (${total}/${regras.cargaMaximaProfessorDia}) em ${dia}.`);
+    });
   }
 
   return conflitos;
@@ -95,10 +146,10 @@ export const carregarGradePorTurma = async (turma: string): Promise<{ grade: Gra
   }
 };
 
-export const salvarGrade = async (grade: GradeHorario): Promise<{ sucesso: boolean; mensagem: string }> => {
+export const salvarGrade = async (grade: GradeHorario, regras: RegrasGrade = regraPadrao): Promise<{ sucesso: boolean; mensagem: string }> => {
   if (!grade.semana_ref.trim()) return { sucesso: false, mensagem: 'Informe a semana de referência da grade.' };
 
-  const conflitos = validarConflitosGrade(grade.itens);
+  const conflitos = validarConflitosGrade(grade.itens, regras);
   if (conflitos.length > 0) return { sucesso: false, mensagem: conflitos[0] };
 
   if (!supabaseConfigurado) return { sucesso: true, mensagem: 'Grade salva em modo local.' };
