@@ -157,3 +157,7 @@ Com isso, os previews ficam no padrão:
 - O bloqueio de salvar ocorre quando há conflitos detectados.
 - Salvamento gera nova versão por turma e permite ações separadas de rascunho/publicação.
 - Interface inclui histórico de versões por turma com ação de carregar versão para edição.
+- Edição inline dos itens da grade (dia/início/fim/disciplina/professor/sala).
+- Fluxo de versão ativa oficial em nível de app (local) para consumo por outros módulos.
+- Serviço tenta RPC atômica (`salvar_grade_horario_atomico`) e usa fallback REST quando indisponível.
+- Relatório de modelagem recomendada para evolução SQL: `docs/relatorio-tabelas-grade-avancada.md`.
