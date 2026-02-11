@@ -161,3 +161,4 @@ Com isso, os previews ficam no padrão:
 - Fluxo de versão ativa oficial em nível de app (local) para consumo por outros módulos.
 - Serviço tenta RPC atômica (`salvar_grade_horario_atomico`) e usa fallback REST quando indisponível.
 - Relatório de modelagem recomendada para evolução SQL: `docs/relatorio-tabelas-grade-avancada.md`.
+- Check automatizado sem dependências externas para o motor de regras: `npm run test:grade-rules`.

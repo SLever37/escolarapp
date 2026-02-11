@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:grade-rules": "rm -rf .tmp-test && tsc --target es2020 --module esnext --moduleResolution bundler --skipLibCheck --rootDir src --outDir .tmp-test src/services/gradeRulesEngine.ts && node tests/grade-rules-check.mjs && rm -rf .tmp-test"
   },
   "dependencies": {
     "lucide-react": "^0.563.0",
