@@ -155,3 +155,4 @@ Com isso, os previews ficam no padrão:
   - limite máximo diário de aulas por professor
   - validação de preenchimento obrigatório (disciplina/professor/sala)
 - O bloqueio de salvar ocorre quando há conflitos detectados.
+- Salvamento gera nova versão por turma e permite ações separadas de rascunho/publicação.

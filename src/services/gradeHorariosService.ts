@@ -165,52 +165,37 @@ export const salvarGrade = async (grade: GradeHorario, regras: RegrasGrade = reg
     const ctx = await contexto();
     if (!ctx?.perfil.unidade_id) return { sucesso: false, mensagem: 'Não foi possível identificar unidade da supervisão.' };
 
-    let gradeId = grade.id;
+    const ultimaResp = await fetch(`${baseUrl()}/rest/v1/grade_horarios?select=versao&unidade_id=eq.${ctx.perfil.unidade_id}&turma=eq.${encodeURIComponent(grade.turma)}&order=versao.desc&limit=1`, {
+      headers: headersAuth(ctx.token),
+    });
+    if (!ultimaResp.ok) throw new Error(await ultimaResp.text());
+    const ultima = await ultimaResp.json() as Array<{ versao: number }>;
+    const proximaVersao = (ultima[0]?.versao || 0) + 1;
 
-    if (gradeId) {
-      const atualizarResp = await fetch(`${baseUrl()}/rest/v1/grade_horarios?id=eq.${gradeId}&unidade_id=eq.${ctx.perfil.unidade_id}`, {
-        method: 'PATCH',
-        headers: { ...headersAuth(ctx.token), Prefer: 'return=representation' },
-        body: JSON.stringify({
-          turma: grade.turma,
-          semana_ref: grade.semana_ref,
-          versao: grade.versao,
-          status: grade.status,
-        }),
-      });
-      if (!atualizarResp.ok) throw new Error(await atualizarResp.text());
-    } else {
-      const gradeResp = await fetch(`${baseUrl()}/rest/v1/grade_horarios`, {
-        method: 'POST',
-        headers: { ...headersAuth(ctx.token), Prefer: 'return=representation' },
-        body: JSON.stringify({
-          unidade_id: ctx.perfil.unidade_id,
-          turma: grade.turma,
-          semana_ref: grade.semana_ref,
-          versao: grade.versao,
-          status: grade.status,
-          criado_por: ctx.perfil.id,
-        }),
-      });
-      if (!gradeResp.ok) throw new Error(await gradeResp.text());
-      const nova = await gradeResp.json() as Array<{ id: string }>;
-      gradeId = nova[0]?.id;
-    }
+    const gradeResp = await fetch(`${baseUrl()}/rest/v1/grade_horarios`, {
+      method: 'POST',
+      headers: { ...headersAuth(ctx.token), Prefer: 'return=representation' },
+      body: JSON.stringify({
+        unidade_id: ctx.perfil.unidade_id,
+        turma: grade.turma,
+        semana_ref: grade.semana_ref,
+        versao: proximaVersao,
+        status: grade.status,
+        criado_por: ctx.perfil.id,
+      }),
+    });
+    if (!gradeResp.ok) throw new Error(await gradeResp.text());
+    const nova = await gradeResp.json() as Array<{ id: string; versao: number; status: 'rascunho' | 'publicada' }>;
+    const gradeId = nova[0]?.id;
 
     if (!gradeId) throw new Error('Não foi possível obter id da grade salva.');
-
-    const limparItensResp = await fetch(`${baseUrl()}/rest/v1/grade_horarios_itens?grade_id=eq.${gradeId}`, {
-      method: 'DELETE',
-      headers: { ...headersAuth(ctx.token), Prefer: 'return=minimal' },
-    });
-    if (!limparItensResp.ok) throw new Error(await limparItensResp.text());
 
     const itens = grade.itens.map((i) => {
       const { id, ...semId } = i;
       return { ...semId, grade_id: gradeId };
     });
 
-    if (itens.length === 0) return { sucesso: true, mensagem: 'Grade salva sem aulas para esta turma.' };
+    if (itens.length === 0) return { sucesso: true, mensagem: `Grade v${proximaVersao} salva sem aulas para esta turma.` };
 
     const itensResp = await fetch(`${baseUrl()}/rest/v1/grade_horarios_itens`, {
       method: 'POST',
@@ -219,7 +204,7 @@ export const salvarGrade = async (grade: GradeHorario, regras: RegrasGrade = reg
     });
     if (!itensResp.ok) throw new Error(await itensResp.text());
 
-    return { sucesso: true, mensagem: 'Grade de Horários salva com sucesso.' };
+    return { sucesso: true, mensagem: `Grade v${proximaVersao} (${grade.status}) salva com sucesso.` };
   } catch (erro) {
     return { sucesso: false, mensagem: `Erro ao salvar grade: ${String(erro)}` };
   }

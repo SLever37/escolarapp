@@ -96,19 +96,26 @@ const GradeDeHorarios: React.FC = () => {
     }));
   };
 
-  const salvar = async () => {
+  const salvar = async (novoStatus: 'rascunho' | 'publicada') => {
     const gradeParaSalvar: GradeHorario = {
       id: gradeId,
       unidade_id: 'auto',
       turma,
       semana_ref: semanaRef,
       versao,
-      status,
+      status: novoStatus,
       itens,
     };
     const resultado = await salvarGrade(gradeParaSalvar, regras);
-    if (resultado.sucesso) setVersao((v) => v + 1);
     setMensagem(resultado.mensagem);
+
+    if (resultado.sucesso) {
+      const { grade, conectado } = await carregarGradePorTurma(turma);
+      setGradeId(grade.id);
+      setVersao(grade.versao || 1);
+      setStatus(grade.status || novoStatus);
+      setStatusBanco(conectado ? 'conectado' : 'local');
+    }
   };
 
   return (
@@ -121,15 +128,20 @@ const GradeDeHorarios: React.FC = () => {
           </div>
           <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Grade de Horários</h2>
           <p className="text-slate-500 text-sm mt-1 font-medium">Editor com conflitos de turma/professor/sala, indisponibilidades e carga máxima diária por professor.</p>
-          <p className="text-slate-400 text-xs mt-1 font-bold uppercase tracking-wider">Versão atual: v{versao} · Status: {status}</p>
+          <p className="text-slate-400 text-xs mt-1 font-bold uppercase tracking-wider">Versão atual: v{versao} · Status: {status === 'publicada' ? 'PUBLICADA' : 'RASCUNHO'}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusBanco === 'conectado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
             {statusBanco === 'conectado' ? 'Banco conectado' : 'Modo local'}
           </span>
-          <button onClick={salvar} disabled={conflitos.length > 0} className="bg-violet-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-200 hover:bg-violet-700 transition-all flex items-center gap-2">
-            <Save size={16} /> Salvar grade
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => salvar('rascunho')} disabled={conflitos.length > 0} className="bg-violet-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-200 hover:bg-violet-700 transition-all flex items-center gap-2">
+              <Save size={16} /> Salvar rascunho
+            </button>
+            <button onClick={() => salvar('publicada')} disabled={conflitos.length > 0} className="bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-200 hover:bg-emerald-700 transition-all flex items-center gap-2">
+              <Save size={16} /> Publicar grade
+            </button>
+          </div>
         </div>
       </header>
 
