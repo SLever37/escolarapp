@@ -16,48 +16,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const buscarPerfil = async (authId: string, tentativas = 0): Promise<void> => {
+  const buscarPerfil = async (authId: string): Promise<void> => {
     try {
-      // Nota: usuarios com RLS corrigido agora permitem esta busca sem recursão
       const { data, error } = await supabase
         .from('usuarios')
         .select('*')
         .eq('auth_user_id', authId)
         .maybeSingle();
 
-      if (error) {
-        console.error('Erro RLS/Banco ao buscar perfil:', error.message);
-        return;
-      }
-
       if (data) {
         setUsuario(data);
-      } else if (tentativas < 3) {
-        // Retry progressivo para dar tempo ao trigger do banco em novos cadastros
-        await new Promise(res => setTimeout(res, 800 * (tentativas + 1)));
-        return buscarPerfil(authId, tentativas + 1);
       } else {
         setUsuario(null);
       }
     } catch (e) {
-      console.error('Erro crítico na AuthProvider:', e);
+      console.error('Erro ao buscar perfil institucional:', e);
     }
   };
 
   const recarregarPerfil = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      await buscarPerfil(session.user.id);
-    }
+    if (session?.user) await buscarPerfil(session.user.id);
   };
 
   useEffect(() => {
     const inicializar = async () => {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await buscarPerfil(session.user.id);
-      }
+      if (session?.user) await buscarPerfil(session.user.id);
       setLoading(false);
     };
 

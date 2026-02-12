@@ -31,42 +31,38 @@ export type NomeModulo =
   | 'mensageiro_central'
   | 'suporte_institucional';
 
-export interface Delegacao {
-  moduloId: NomeModulo;
-  acoes: AcaoPermissao[];
-  dataInicio?: string;
-  dataFim?: string;
-}
-
 export interface Usuario {
   id: string;
-  auth_user_id?: string;
+  auth_user_id: string;
   nome: string;
-  email?: string;
+  email: string;
+  cpf: string;
   papel: PapelUsuario;
-  nivel?: number; // 0 a 6
-  unidade_id?: string | null;
+  unidade_id?: string;
   unidade?: string;
-  cpf?: string;
-  delegacoes: Delegacao[];
+  nivel: number;
+  delegacoes: any[];
 }
 
-/**
- * Interface para representar uma unidade escolar.
- * Fix: Adicionada interface UnidadeEscolar requerida por servicos/bancoDeDados.ts
- */
 export interface UnidadeEscolar {
   id: string;
   nome: string;
-  gestorNome: string;
-  status: 'ativo' | 'suspenso';
-  totalAlunos: number;
+  gestor_nome: string;
+  status: 'ativo' | 'arquivado' | 'suspenso';
+  alunos_count: number;
+  versao_core: string;
+  criado_em?: string;
 }
 
-/**
- * Interface para representar um item na grade de horários.
- * Fix: Adicionada interface GradeItem requerida por paginas/pedagogia/GradeHorarios.tsx
- */
+export interface Notificacao {
+  id: string;
+  titulo: string;
+  mensagem: string;
+  lida: boolean;
+  tipo: 'alerta' | 'sucesso' | 'info' | 'erro';
+  criado_em: string;
+}
+
 export interface GradeItem {
   id: string;
   dia_semana: 'SEG' | 'TER' | 'QUA' | 'QUI' | 'SEX' | 'SAB';

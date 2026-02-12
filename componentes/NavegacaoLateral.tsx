@@ -2,10 +2,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, Users, UserSquare2, 
-  GraduationCap, FileText, FileSearch, Globe,
-  ShieldCheck, LogOut, BrainCircuit, ClipboardList, 
-  Server, LifeBuoy, MessageSquare, X, Settings, ShieldAlert
+  LayoutDashboard, GraduationCap, Globe,
+  LogOut, Eye, ShieldCheck, LifeBuoy, MessageSquare, X, Activity,
+  FileText, UserSquare2, School
 } from 'lucide-react';
 import { useAuth } from '../servicos/contexto/AuthContext';
 
@@ -21,7 +20,9 @@ const NavegacaoLateral: React.FC<Props> = ({ aberta, aoFechar }) => {
   if (!usuario) return null;
 
   const LinkMenu = ({ para, icone, label }: any) => {
-    const ativo = location.pathname === para || (para !== '/' && location.pathname.startsWith(para));
+    // Comparação de caminho exata para evitar que múltiplos botões fiquem ativos
+    const ativo = location.pathname === para;
+    
     return (
       <Link 
         to={para} 
@@ -29,9 +30,9 @@ const NavegacaoLateral: React.FC<Props> = ({ aberta, aoFechar }) => {
           if (window.innerWidth < 1024) aoFechar();
         }}
         className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all
-          ${ativo ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-blue-100/80 hover:bg-blue-800/60 hover:text-white'}`}
+          ${ativo ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-blue-100/60 hover:bg-white/5 hover:text-white'}`}
       >
-        {React.cloneElement(icone, { size: 18 })}
+        {React.cloneElement(icone as React.ReactElement<any>, { size: 18 })}
         <span className="truncate">{label}</span>
       </Link>
     );
@@ -43,20 +44,17 @@ const NavegacaoLateral: React.FC<Props> = ({ aberta, aoFechar }) => {
       lg:relative lg:translate-x-0
       ${aberta ? 'translate-x-0' : '-translate-x-full'}
     `}>
-      <div className="p-6 lg:p-8 border-b border-white/5 flex items-center justify-between">
+      <div className="p-6 lg:p-8 border-b border-white/5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4 min-w-0">
           <div className="bg-blue-600 p-2 rounded-2xl shadow-xl shrink-0">
             <GraduationCap className="text-white" size={24} />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl font-black tracking-tighter leading-none truncate">EscolarApp</h1>
-            <p className="text-[9px] uppercase tracking-widest text-blue-400 font-black mt-1">Nível {usuario.nivel}</p>
+            <p className="text-[9px] uppercase tracking-widest text-blue-400 font-black mt-1">Plataforma Core</p>
           </div>
         </div>
-        <button 
-          onClick={aoFechar}
-          className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
-        >
+        <button onClick={aoFechar} className="lg:hidden p-2 text-slate-400 hover:text-white">
           <X size={20} />
         </button>
       </div>
@@ -65,14 +63,14 @@ const NavegacaoLateral: React.FC<Props> = ({ aberta, aoFechar }) => {
         {usuario.papel === 'admin_plataforma' && (
           <>
             <div className="space-y-1">
-              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Controle de Ecossistema</h3>
+              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Governança Global</h3>
               <LinkMenu para="/master" icone={<Globe />} label="Gestão de Escolas" />
-              <LinkMenu para="/master/auditoria" icone={<ShieldAlert />} label="Auditoria Forense" />
-              <LinkMenu para="/master/resiliencia" icone={<Server />} label="Resiliência & Core" />
+              <LinkMenu para="/master/auditoria" icone={<Eye />} label="Auditoria Forense" />
+              <LinkMenu para="/master/resiliencia" icone={<Activity />} label="Uptime Cluster" />
             </div>
             <div className="space-y-1">
-              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Suporte Master</h3>
-              <LinkMenu para="/master/suporte" icone={<LifeBuoy />} label="Chamados Diretores" />
+              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Suporte</h3>
+              <LinkMenu para="/master/suporte" icone={<LifeBuoy />} label="Chamados Direção" />
             </div>
           </>
         )}
@@ -82,53 +80,27 @@ const NavegacaoLateral: React.FC<Props> = ({ aberta, aoFechar }) => {
             <div className="space-y-1">
               <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Estratégico</h3>
               <LinkMenu para="/gestao" icone={<LayoutDashboard />} label="Painel Unidade" />
-              <LinkMenu para="/mensagens" icone={<MessageSquare />} label="Canais de Comunicação" />
+              <LinkMenu para="/mensagens" icone={<MessageSquare />} label="Mensageiro Central" />
             </div>
             <div className="space-y-1">
-              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Ajuda</h3>
-              <LinkMenu para="/gestao/suporte" icone={<LifeBuoy />} label="Ajuda Master" />
+              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Operacional</h3>
+              <LinkMenu para="/secretaria" icone={<FileText />} label="Secretaria" />
+              <LinkMenu para="/supervisao/grade-horarios" icone={<Activity />} label="Grades" />
+              <LinkMenu para="/professor" icone={<UserSquare2 />} label="Diários" />
+              <LinkMenu para="/portaria" icone={<School />} label="Portaria" />
             </div>
           </>
         )}
-
-        {['pedagogia', 'secretaria', 'professor'].includes(usuario.papel) && (
-          <div className="space-y-1">
-             <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Geral</h3>
-             <LinkMenu para="/mensagens" icone={<MessageSquare />} label="Mensagens" />
-          </div>
-        )}
-        
-        {usuario.papel === 'pedagogia' && (
-          <div className="space-y-1">
-            <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Pedagogia</h3>
-            <LinkMenu para="/supervisao" icone={<BrainCircuit />} label="Monitoramento" />
-            <LinkMenu para="/supervisao/grade-horarios" icone={<ClipboardList />} label="Grade de Horários" />
-          </div>
-        )}
-
-        {usuario.papel === 'secretaria' && (
-          <div className="space-y-1">
-            <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Secretaria</h3>
-            <LinkMenu para="/secretaria" icone={<FileText />} label="Governança Legal" />
-          </div>
-        )}
-
-        {usuario.papel === 'professor' && (
-          <div className="space-y-1">
-            <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Docência</h3>
-            <LinkMenu para="/professor" icone={<UserSquare2 />} label="Diário de Classe" />
-          </div>
-        )}
       </nav>
 
-      <div className="p-6 bg-slate-900/50 border-t border-white/5 mt-auto">
+      <div className="p-6 bg-slate-900/50 border-t border-white/5 mt-auto shrink-0">
         <div className="flex items-center gap-4">
-          <img src={`https://ui-avatars.com/api/?name=${usuario.nome}&background=3b82f6&color=fff`} className="w-10 h-10 rounded-xl shrink-0" alt="Avatar" />
+          <img src={`https://ui-avatars.com/api/?name=${usuario.nome}&background=3b82f6&color=fff`} className="w-10 h-10 rounded-xl" alt="Avatar" />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black truncate">{usuario.nome}</p>
-            <p className="text-[9px] text-blue-400 uppercase font-black truncate">{usuario.papel.replace('_', ' ')}</p>
+            <p className="text-[9px] text-blue-400 uppercase font-black truncate">Nível de Acesso {usuario.nivel}</p>
           </div>
-          <button onClick={sair} className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg shrink-0">
+          <button onClick={sair} className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg">
             <LogOut size={16} />
           </button>
         </div>

@@ -19,13 +19,16 @@
       .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-      
-      /* Correção Global de Inputs */
+
+      /* RESET GLOBAL DE INPUTS: Texto sempre escuro para legibilidade */
       input, select, textarea {
-        color: #1e293b !important; /* text-slate-800 */
+        color: #1e293b !important;
+      }
+      .dark-context input, .dark-context select, .dark-context textarea {
+        color: #ffffff !important;
       }
       ::placeholder {
-        color: #94a3b8 !important; /* text-slate-400 */
+        color: #94a3b8 !important;
       }
     </style>
   <script type="importmap">
@@ -46,7 +49,6 @@
 }
 </script>
 <script>
-  // Mobile height fix for browser address bars
   const setAppHeight = () => {
     document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
   };
