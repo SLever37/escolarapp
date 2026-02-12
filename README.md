@@ -1,22 +1,25 @@
-
 # 🧠 EscolarApp — Central de Governança Escolar
 
-Este projeto é o esqueleto completo de um ecossistema digital para gestão educacional pública ou privada de grande porte.
+Este projeto implementa um ecossistema digital para gestão educacional baseado em governança institucional e segurança de dados.
 
-## 🎯 Visão do Sistema
-Diferente de sistemas de notas comuns, o EscolarApp é uma **Central de Operação**. Ele prioriza a conformidade legal, a segurança dos dados (LGPD) e o apoio à decisão baseada em dados (IA).
+## 🎯 Arquitetura de Hierarquia (Auth & RLS)
+- **N0 - Master (`admin_plataforma`)**: Provisionamento global.
+- **N1 - Gestor (`gestor`)**: Visão total e estratégica da unidade. Dashboard unificado.
+- **N2 - Pedagogia (`pedagogia`)**: Supervisão de aprendizagem e Módulo "Grade de Horários".
+- **N3 - Secretaria (`secretaria`)**: Gestão legal e documentação.
+- **N4 - Professor (`professor`)**: Operacional direto e Diário de Classe.
+- **N5 - Família (`familia`)**: Acesso via CPF ao portal do aluno.
+- **N6 - Portaria (`portaria`)**: Fluxo de entrada/saída.
 
-## 📂 Organização de Pastas
-- `/components`: Componentes globais (Sidebar, Layout, UI base).
-- `/pages`: Módulos funcionais (16 módulos conforme brainstorm).
-- `/services`: Simulação de APIs e lógica de negócio.
-- `/types`: Definições de interfaces TypeScript para o domínio escolar.
-- `/mocks`: Constantes de dados para prototipação.
+## 📂 Organização do Projeto
+- `componentes/`: UI base e componentes reutilizáveis.
+- `paginas/`: Telas funcionais divididas por cargo.
+- `servicos/`: Lógica de integração com Supabase e Context API.
+- `tipos/`: Interfaces TypeScript rigorosas.
+- `rotas/`: Gestão de permissões e navegação.
 
-## 🛠️ Pilares de Evolução
-1. **Segurança**: Implementar logs de auditoria em cada ação da Secretaria.
-2. **Integração**: Preparado para conexões com gov.br e Diários Oficiais via placeholders.
-3. **IA**: Módulo de Inteligência configurado para predição de evasão (mimetizado em mocks).
+## 🗓️ Grade de Horários
+Módulo avançado que permite a alocação de disciplinas, professores e salas por turma, com foco em evitar janelas e otimizar a carga horária municipal.
 
-## 🚀 Como usar
-Navegue pelos módulos usando a Sidebar (Desktop) ou Menu Inferior (Mobile). Cada página demonstra um estado funcional com dados simulados.
+## 🔐 Segurança e PCD (LGPD)
+Dados de alunos com necessidades especiais (PCD) são criptografados e restritos a níveis de coordenação e gestão, auditando cada acesso via logs forenses.

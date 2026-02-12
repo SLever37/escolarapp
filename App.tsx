@@ -1,174 +1,147 @@
 
-<<<<<<< HEAD
-import React from 'react';
-=======
 import React, { useState } from 'react';
->>>>>>> a0ebce0f375dc629d45047f871c06d7c8283478e
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Bell, Search, Building2 } from 'lucide-react';
+import { useAuth } from './servicos/contexto/AuthContext';
+import NavegacaoLateral from './componentes/NavegacaoLateral';
+import { Menu, X, Bell, Search, Building2 } from 'lucide-react';
 
 // Paginas
 import Login from './paginas/Login';
+import AcessoNegado from './paginas/AcessoNegado';
 import DashboardMaster from './paginas/master/DashboardMaster';
-import DashboardGestor from './pages/DashboardGestor'; // Ajustaremos o nome no proximo passo se necessario
-import AcessoNegado from './pages/AcessoNegado'; // Vamos criar/ajustar esse componente
-import GestaoAcessos from './pages/gestor/GestaoAcessos'; // Nova página
+import AuditoriaGlobal from './paginas/master/AuditoriaGlobal';
+import ResilienciaSistema from './paginas/master/ResilienciaSistema';
+import SuporteCentral from './paginas/master/SuporteCentral';
+import PainelGestor from './paginas/gestao/PainelGestor';
+import SuporteMaster from './paginas/gestao/SuporteMaster';
+import PedagogiaCentral from './paginas/pedagogia/PedagogiaCentral';
+import GradeHorarios from './paginas/pedagogia/GradeHorarios';
+import SecretariaLegal from './paginas/secretaria/SecretariaLegal';
+import DiarioProfessor from './paginas/professor/DiarioProfessor';
+import PortariaAcesso from './paginas/portaria/PortariaAcesso';
+import PortalFamilia from './paginas/familia/PortalFamilia';
+import MensageiroCentral from './paginas/MensageiroCentral';
 
-// Componentes Reutilizados (Wrappers para os Módulos Existentes)
-import DashboardPedagogo from './pages/DashboardPedagogo';
-import SecretariaLegal from './pages/SecretariaLegal';
-import DiarioProfessor from './pages/DiarioProfessor';
-import PortariaAcesso from './pages/PortariaAcesso';
-
-// Componentes UI
-import NavegacaoLateral from './componentes/NavegacaoLateral';
-import RequireAuth from './components/RequireAuth';
-
-<<<<<<< HEAD
-// Auth
-import { useAuth } from './context/AuthContext';
+import { GuardaRota } from './rotas/GuardaRota';
 
 const App: React.FC = () => {
-  const { usuario, signOut } = useAuth();
+  const { usuario, loading } = useAuth();
+  const [sidebarAberta, setSidebarAberta] = useState(false);
 
-  if (!usuario) {
-    return <Login />;
-  }
+  if (loading) return (
+    <div className="h-screen flex items-center justify-center bg-slate-900 text-white">
+      <div className="animate-pulse font-black tracking-widest uppercase text-sm">SINCRO_SISTEMA_CORE...</div>
+    </div>
+  );
 
-  // Controlador de Dashboard Raiz baseado no Papel
-  const renderDashboardPrincipal = () => {
-    switch (usuario.papel) {
-      case 'admin_plataforma': return <DashboardMaster />;
-      case 'gestor': return <DashboardGestor />;
-      case 'pedagogia': return <DashboardPedagogo />;
-      case 'professor': return <DiarioProfessor />;
-      case 'secretaria': return <SecretariaLegal />;
-      case 'portaria': return <PortariaAcesso />;
-      default: return <DashboardPedagogo />;
-    }
-  };
+  const toggleSidebar = () => setSidebarAberta(!sidebarAberta);
 
-=======
-// Tipos e Servicos
-import { Usuario, PapelUsuario } from './tipos';
-
-const App: React.FC = () => {
-  const [estaAutenticado, setEstaAutenticado] = useState(false);
-  const [usuarioAtual, setUsuarioAtual] = useState<Usuario | null>(null);
-
-  // Função de Login Simulado com Mocks de Perfil
-  const lidarComLogin = (papel: PapelUsuario) => {
-    let mockUsuario: Usuario = {
-      id: 'u1',
-      nome: 'Usuário Padrão',
-      cpf: '000.000.000-00',
-      papel: papel,
-      unidade: 'E.M. Presidente Vargas',
-      delegacoes: []
-    };
-
-    // Personalizando o Mock baseado no papel
-    if (papel === 'admin_plataforma') {
-      mockUsuario.nome = "Administrador Master";
-      mockUsuario.unidade = "Plataforma Central";
-    } else if (papel === 'gestor') {
-      mockUsuario.nome = "Dr. Roberto Magalhães";
-    } else if (papel === 'professor') {
-      mockUsuario.nome = "Prof. Ricardo Santos";
-    }
-
-    setUsuarioAtual(mockUsuario);
-    setEstaAutenticado(true);
-  };
-
-  const lidarComLogoff = () => {
-    setEstaAutenticado(false);
-    setUsuarioAtual(null);
-  };
-
-  if (!estaAutenticado || !usuarioAtual) {
-    return <Login aoLogar={lidarComLogin} />;
-  }
-
->>>>>>> a0ebce0f375dc629d45047f871c06d7c8283478e
   return (
-    <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-inter">
-      <NavegacaoLateral usuario={usuario} aoSair={signOut} />
-
-      <main className="flex-1 flex flex-col min-w-0">
-        {/* Header Global */}
-        <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 shrink-0 z-40">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-2 rounded-2xl">
-              <Building2 size={16} className="text-blue-600" />
-              <div className="flex flex-col">
-                <span className="text-[9px] font-black text-blue-600 uppercase tracking-tighter">Instância Ativa</span>
-                <span className="text-xs font-bold text-slate-700">{usuario.unidade}</span>
+    <div className="flex h-screen bg-[#f8fafc] overflow-hidden relative">
+      {usuario && (
+        <>
+          {/* Backdrop para Mobile */}
+          {sidebarAberta && (
+            <div 
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] lg:hidden transition-opacity"
+              onClick={toggleSidebar}
+            />
+          )}
+          <NavegacaoLateral aberta={sidebarAberta} aoFechar={toggleSidebar} />
+        </>
+      )}
+      
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        {usuario && (
+          <header className="h-16 lg:h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-10 shrink-0 z-40">
+            <div className="flex items-center gap-3 lg:gap-4">
+              <button 
+                onClick={toggleSidebar}
+                className="p-2 lg:hidden text-slate-600 hover:bg-slate-50 rounded-xl"
+              >
+                <Menu size={24} />
+              </button>
+              
+              <div className="flex items-center gap-2 lg:gap-3 bg-slate-50 border border-slate-200 px-3 lg:px-4 py-1.5 lg:py-2 rounded-xl lg:rounded-2xl max-w-[180px] lg:max-w-none">
+                <Building2 size={16} className="text-blue-600 shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[8px] lg:text-[9px] font-black text-blue-600 uppercase tracking-tighter truncate">Instância Ativa</span>
+                  <span className="text-[10px] lg:text-xs font-bold text-slate-700 truncate">{usuario.unidade || "Core Central"}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center bg-slate-50 border border-slate-100 px-4 py-2 rounded-2xl w-80">
-              <Search size={16} className="text-slate-400" />
-              <input placeholder="Busca global inteligente..." className="bg-transparent border-none outline-none text-xs font-medium ml-3 w-full" />
-            </div>
-            
-            <button className="relative p-2.5 bg-slate-50 text-slate-400 hover:text-blue-600 rounded-xl transition-all">
-              <Bell size={20} />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
-            </button>
-          </div>
-        </header>
-
-        {/* Área de Conteúdo Rotativo */}
-        <section className="flex-1 overflow-y-auto p-10 custom-scrollbar">
-          <div className="max-w-7xl mx-auto">
-            <Routes>
-<<<<<<< HEAD
-              <Route path="/" element={<RequireAuth><>{renderDashboardPrincipal()}</></RequireAuth>} />
-              <Route path="/secretaria" element={<RequireAuth><GuardiaoPermissao modulo="secretaria_legal"><SecretariaLegal /></GuardiaoPermissao></RequireAuth>} />
-              <Route path="/professor" element={<RequireAuth><GuardiaoPermissao modulo="diario_classe"><DiarioProfessor /></GuardiaoPermissao></RequireAuth>} />
-              <Route path="/pedagogia" element={<RequireAuth><GuardiaoPermissao modulo="pedagogia_central"><DashboardPedagogo /></GuardiaoPermissao></RequireAuth>} />
-              <Route path="/portaria" element={<RequireAuth><GuardiaoPermissao modulo="portaria_acesso"><PortariaAcesso /></GuardiaoPermissao></RequireAuth>} />
-=======
-              {/* Rota Raiz: Redireciona para o Dashboard correto baseado no papel */}
-              <Route path="/" element={
-                usuarioAtual.papel === 'admin_plataforma' ? <DashboardMaster /> :
-                usuarioAtual.papel === 'gestor' ? <DashboardGestor /> :
-                usuarioAtual.papel === 'pedagogia' ? <DashboardPedagogo /> :
-                usuarioAtual.papel === 'secretaria' ? <SecretariaLegal /> :
-                usuarioAtual.papel === 'professor' ? <DiarioProfessor /> :
-                <AcessoNegado />
-              } />
-
-              {/* Rotas Específicas do Gestor */}
-              {usuarioAtual.papel === 'gestor' && (
-                <>
-                  <Route path="/acessos" element={<GestaoAcessos />} />
-                  {/* Gestor tem visão de tudo, então pode acessar rotas dos departamentos */}
-                  <Route path="/pedagogia" element={<DashboardPedagogo />} />
-                  <Route path="/secretaria" element={<SecretariaLegal />} />
-                  <Route path="/portaria" element={<PortariaAcesso />} />
-                </>
-              )}
-
-              {/* Rotas Departamentais (Acessíveis se o usuário for do papel OU Gestor) */}
-              <Route path="/pedagogia" element={
-                ['gestor', 'pedagogia'].includes(usuarioAtual.papel) ? <DashboardPedagogo /> : <AcessoNegado />
-              } />
+            <div className="flex items-center gap-2 lg:gap-6">
+              <div className="hidden md:flex items-center bg-slate-50 border border-slate-100 px-4 py-2 rounded-2xl w-64 lg:w-80">
+                <Search size={16} className="text-slate-400" />
+                <input placeholder="Busca global..." className="bg-transparent border-none outline-none text-xs font-medium ml-3 w-full" />
+              </div>
               
-              <Route path="/secretaria" element={
-                ['gestor', 'secretaria'].includes(usuarioAtual.papel) ? <SecretariaLegal /> : <AcessoNegado />
-              } />
+              <button className="relative p-2 lg:p-2.5 bg-slate-50 text-slate-400 hover:text-blue-600 rounded-xl transition-all">
+                <Bell size={20} />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
+              </button>
+            </div>
+          </header>
+        )}
 
-              {/* Rota Universal de Erro */}
->>>>>>> a0ebce0f375dc629d45047f871c06d7c8283478e
-              <Route path="/acesso-negado" element={<AcessoNegado />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </div>
-        </section>
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#f8fafc]">
+          <Routes>
+            <Route path="/acesso" element={!usuario ? <Login /> : <Navigate to="/" />} />
+            <Route path="/acesso-negado" element={<AcessoNegado />} />
+
+            {/* Rotas Master (Nível 0) */}
+            <Route element={<GuardaRota papeisPermitidos={['admin_plataforma']} />}>
+              <Route path="/master" element={<DashboardMaster />} />
+              <Route path="/master/auditoria" element={<AuditoriaGlobal />} />
+              <Route path="/master/resiliencia" element={<ResilienciaSistema />} />
+              <Route path="/master/suporte" element={<SuporteCentral />} />
+            </Route>
+
+            {/* Rotas Gestor (Nível 1) */}
+            <Route element={<GuardaRota papeisPermitidos={['gestor']} />}>
+              <Route path="/gestao" element={<PainelGestor />} />
+              <Route path="/gestao/suporte" element={<SuporteMaster />} />
+            </Route>
+
+            {/* Chat Comum (Todos) */}
+            <Route element={<GuardaRota papeisPermitidos={['gestor', 'pedagogia', 'secretaria', 'professor', 'familia']} />}>
+              <Route path="/mensagens" element={<MensageiroCentral />} />
+            </Route>
+
+            <Route element={<GuardaRota papeisPermitidos={['pedagogia', 'gestor']} />}>
+              <Route path="/supervisao" element={<PedagogiaCentral />} />
+              <Route path="/supervisao/grade-horarios" element={<GradeHorarios />} />
+            </Route>
+
+            <Route element={<GuardaRota papeisPermitidos={['secretaria', 'gestor']} />}>
+              <Route path="/secretaria" element={<SecretariaLegal />} />
+            </Route>
+
+            <Route element={<GuardaRota papeisPermitidos={['professor', 'gestor']} />}>
+              <Route path="/professor" element={<DiarioProfessor />} />
+            </Route>
+
+            <Route element={<GuardaRota papeisPermitidos={['familia']} />}>
+              <Route path="/familia/:cpf" element={<PortalFamilia />} />
+            </Route>
+
+            <Route element={<GuardaRota papeisPermitidos={['portaria', 'gestor']} />}>
+              <Route path="/portaria" element={<PortariaAcesso />} />
+            </Route>
+
+            <Route path="/" element={
+              !usuario ? <Navigate to="/acesso" /> :
+              usuario.papel === 'admin_plataforma' ? <Navigate to="/master" /> :
+              usuario.papel === 'gestor' ? <Navigate to="/gestao" /> :
+              usuario.papel === 'pedagogia' ? <Navigate to="/supervisao" /> :
+              usuario.papel === 'secretaria' ? <Navigate to="/secretaria" /> :
+              usuario.papel === 'professor' ? <Navigate to="/professor" /> :
+              usuario.papel === 'portaria' ? <Navigate to="/portaria" /> :
+              <Navigate to="/acesso-negado" />
+            } />
+          </Routes>
+        </div>
       </main>
     </div>
   );
