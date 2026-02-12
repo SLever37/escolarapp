@@ -51,6 +51,8 @@ export interface UnidadeEscolar {
   status: 'ativo' | 'arquivado' | 'suspenso';
   alunos_count: number;
   versao_core: string;
+  // Fix: added missing codigo_inep property to match database schema and UI usage in DashboardMaster.tsx
+  codigo_inep?: string | null;
   criado_em?: string;
 }
 
