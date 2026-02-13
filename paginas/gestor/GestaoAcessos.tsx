@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   UserPlus, ShieldCheck, ShieldAlert, 
@@ -6,12 +5,28 @@ import {
   Eye, Edit3, Trash2, KeyRound, Users
 } from 'lucide-react';
 import { KpiCard, SectionHeader, AlertItem } from '../../componentes/DashboardUI';
+import ModalConfirmacao from '../../componentes/ModalConfirmacao';
 
 const GestaoAcessos = () => {
   const [activeTab, setActiveTab] = useState('usuarios');
+  const [modalDeletar, setModalDeletar] = useState<{aberto: boolean, usuario: any | null}>({
+    aberto: false,
+    usuario: null
+  });
+
+  const handleDeletarUsuario = (usuario: any) => {
+    setModalDeletar({ aberto: true, usuario });
+  };
+
+  const confirmarExclusao = () => {
+    // Lógica real de exclusão viria aqui
+    console.log(`Excluindo usuário: ${modalDeletar.usuario?.name}`);
+    setModalDeletar({ aberto: false, usuario: null });
+    alert('Usuário removido da base de governança.');
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="p-4 lg:p-10 space-y-8 animate-in fade-in duration-700">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">Gestão de Acessos & Delegação</h2>
@@ -22,14 +37,14 @@ const GestaoAcessos = () => {
         </button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
          <KpiCard title="Usuários Ativos" value="58" icon={<Users />} color="blue" />
          <KpiCard title="Acessos Delegados" value="12" icon={<KeyRound />} color="violet" />
          <KpiCard title="Tentativas de Bloqueio" value="03" icon={<ShieldAlert />} color="rose" />
          <KpiCard title="Auditoria LGPD" value="OK" icon={<ShieldCheck />} color="emerald" />
       </div>
 
-      <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-50/30">
            <div className="flex gap-1 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
               {['Usuarios', 'Delegacoes', 'Seguranca'].map((tab) => (
@@ -44,7 +59,7 @@ const GestaoAcessos = () => {
            </div>
            <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input type="text" placeholder="Buscar por nome ou cargo..." className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none w-80 shadow-sm focus:ring-2 focus:ring-blue-500 transition-all" />
+              <input type="text" placeholder="Buscar por nome ou cargo..." className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none w-full md:w-80 shadow-sm focus:ring-2 focus:ring-blue-500 transition-all" />
            </div>
         </div>
 
@@ -67,6 +82,7 @@ const GestaoAcessos = () => {
                   time="Há 10 min" 
                   img="https://picsum.photos/id/64/48/48"
                   status="ativo"
+                  onDelete={() => handleDeletarUsuario({name: "Sra. Maria Auxiliadora"})}
                 />
                 <TableRow 
                   name="Sr. Cláudio Rocha" 
@@ -75,24 +91,26 @@ const GestaoAcessos = () => {
                   time="Ontem, 14:20" 
                   img="https://picsum.photos/id/65/48/48"
                   status="ativo"
-                />
-                <TableRow 
-                  name="Helena Souza" 
-                  role="Secretária" 
-                  delegation="Envio Bolsa Família" 
-                  time="Hoje, 09:15" 
-                  img="https://picsum.photos/id/66/48/48"
-                  status="suspenso"
+                  onDelete={() => handleDeletarUsuario({name: "Sr. Cláudio Rocha"})}
                 />
              </tbody>
           </table>
         </div>
       </div>
+
+      <ModalConfirmacao 
+        aberto={modalDeletar.aberto}
+        tipo="excluir"
+        titulo="Revogar Acesso"
+        itemNome={modalDeletar.usuario?.name || ''}
+        onConfirmar={confirmarExclusao}
+        onFechar={() => setModalDeletar({ aberto: false, usuario: null })}
+      />
     </div>
   );
 };
 
-const TableRow = ({ name, role, delegation, time, img, status }: any) => (
+const TableRow = ({ name, role, delegation, time, img, status, onDelete }: any) => (
   <tr className="hover:bg-slate-50 transition-colors group">
      <td className="px-8 py-5">
         <div className="flex items-center gap-4">
@@ -123,7 +141,7 @@ const TableRow = ({ name, role, delegation, time, img, status }: any) => (
      <td className="px-8 py-5 text-right">
         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
            <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-white rounded-xl shadow-sm border border-transparent hover:border-slate-100 transition-all"><Edit3 size={16} /></button>
-           <button className="p-2 text-slate-400 hover:text-rose-600 hover:bg-white rounded-xl shadow-sm border border-transparent hover:border-slate-100 transition-all"><Trash2 size={16} /></button>
+           <button onClick={onDelete} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-white rounded-xl shadow-sm border border-transparent hover:border-slate-100 transition-all"><Trash2 size={16} /></button>
            <button className="p-2 text-slate-400 hover:text-slate-900 hover:bg-white rounded-xl shadow-sm border border-transparent hover:border-slate-100 transition-all"><MoreHorizontal size={16} /></button>
         </div>
      </td>

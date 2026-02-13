@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 
@@ -29,10 +28,10 @@ export const KpiCard: React.FC<KpiCardProps> = ({ title, value, trend, icon, col
   return (
     <div 
       onClick={onClick}
-      className="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border border-slate-200 shadow-sm group hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between h-32 lg:h-40"
+      className="bg-white p-4 lg:p-6 rounded-xl border border-slate-200 shadow-sm group hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between h-32 lg:h-40"
     >
       <div className="flex items-center justify-between mb-2 lg:mb-4">
-        <div className={`p-2 lg:p-3 rounded-xl lg:rounded-2xl ${styles[color]} group-hover:scale-110 transition-transform`}>
+        <div className={`p-2 lg:p-3 rounded-lg ${styles[color]} group-hover:scale-110 transition-transform`}>
           {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { size: 18 }) : icon}
         </div>
         {trend && (
@@ -58,7 +57,7 @@ interface AlertItemProps {
 }
 
 export const AlertItem: React.FC<AlertItemProps> = ({ label, desc, time, critical }) => (
-  <div className="flex items-center justify-between p-3 lg:p-4 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl hover:bg-white hover:shadow-md transition-all cursor-pointer group min-w-0">
+  <div className="flex items-center justify-between p-3 lg:p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-white hover:shadow-md transition-all cursor-pointer group min-w-0">
     <div className="flex flex-col min-w-0">
        <span className={`text-[8px] lg:text-[10px] font-black uppercase tracking-widest ${critical ? 'text-rose-600' : 'text-slate-400'} truncate`}>
          {label}
@@ -74,7 +73,7 @@ export const AlertItem: React.FC<AlertItemProps> = ({ label, desc, time, critica
 
 export const SectionHeader = ({ title, subtitle, icon }: any) => (
   <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-6 min-w-0">
-    <div className="p-2 lg:p-2.5 bg-slate-100 text-slate-500 rounded-lg lg:rounded-xl shrink-0">
+    <div className="p-2 lg:p-2.5 bg-slate-100 text-slate-500 rounded-lg shrink-0">
       {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { size: 16 }) : icon}
     </div>
     <div className="min-w-0">

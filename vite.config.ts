@@ -23,7 +23,8 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, './'),
+          // Fix: replaced __dirname with '.' as __dirname is not available in ESM environments
+          '@': path.resolve('.'),
         }
       }
     };

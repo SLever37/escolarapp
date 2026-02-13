@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './servicos/contexto/AuthContext';
@@ -61,8 +60,13 @@ const App: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="h-screen flex items-center justify-center bg-slate-900 text-white">
-      <div className="animate-pulse font-black tracking-widest uppercase text-sm">SINCRO_SISTEMA_CORE...</div>
+    <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
+      <div className="animate-pulse flex flex-col items-center gap-3">
+        <div className="font-black tracking-tighter text-2xl lg:text-4xl text-blue-400">
+          {usuario?.unidade || "EscolarApp"}
+        </div>
+        <div className="font-bold tracking-[0.3em] uppercase text-xs opacity-60">Aguarde!</div>
+      </div>
     </div>
   );
 

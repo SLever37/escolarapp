@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { UnidadeEscolar } from '../tipos';
 import { escolasService } from '../services/escolas.service';
@@ -8,7 +7,7 @@ export const useEscolasMaster = () => {
   const [unidades, setUnidades] = useState<UnidadeEscolar[]>([]);
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
+  const [processandoAcao, setProcessandoAcao] = useState<string | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [menuAtivo, setMenuAtivo] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
@@ -23,12 +22,11 @@ export const useEscolasMaster = () => {
 
   const carregarEscolas = useCallback(async () => {
     setLoading(true);
-    setErro(null);
     try {
-      const data = await escolasService.listarEscolasAtivas();
+      const data = await escolasService.fetchUnidades();
       setUnidades(data);
     } catch (err: any) {
-      setErro(err.message);
+      console.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -39,7 +37,6 @@ export const useEscolasMaster = () => {
   }, [carregarEscolas]);
 
   const abrirModal = () => setModalAberto(true);
-  
   const fecharModal = () => {
     setModalAberto(false);
     setNovaUnidade({ nome: '', codigoInep: '', gestorNome: '', gestorEmail: '', gestorSenha: '' });
@@ -50,16 +47,15 @@ export const useEscolasMaster = () => {
   };
 
   const confirmarCriacaoEscolaEGestor = async () => {
+    if (salvando) return;
     setSalvando(true);
     try {
-      // 1. Cria a unidade
-      const escola = await escolasService.criarEscola({
+      const escola = await escolasService.handleAddUnidade({
         nome: novaUnidade.nome,
         gestor_nome: novaUnidade.gestorNome,
         codigo_inep: novaUnidade.codigoInep
       });
 
-      // 2. Cria o gestor institucional vinculado
       await gestoresService.criarGestorVinculado({
         nome: novaUnidade.gestorNome,
         email: novaUnidade.gestorEmail,
@@ -69,46 +65,51 @@ export const useEscolasMaster = () => {
 
       await carregarEscolas();
       fecharModal();
-      alert(`Provisionamento concluído!\nUnidade: ${escola.nome}\nGestor: ${novaUnidade.gestorNome}`);
+      alert(`Provisionamento concluído para: ${escola.nome}`);
     } catch (err: any) {
-      alert('Falha no provisionamento: ' + err.message);
+      alert('Falha crítica: ' + err.message);
     } finally {
       setSalvando(false);
     }
   };
 
   const arquivarEscola = async (id: string) => {
+    if (processandoAcao) return;
+    setProcessandoAcao(id);
     try {
-      await escolasService.arquivarEscola(id);
+      await escolasService.arquivarUnidade(id);
       await carregarEscolas();
       setMenuAtivo(null);
     } catch (err: any) {
-      alert('Erro ao arquivar: ' + err.message);
+      alert('Erro: ' + err.message);
+    } finally {
+      setProcessandoAcao(null);
     }
   };
 
   const excluirEscola = async (id: string) => {
-    if (!confirm('ATENÇÃO: Você está prestes a excluir uma instância permanentemente. Confirmar?')) return;
+    if (processandoAcao) return;
+    if (!confirm('Deseja excluir permanentemente esta unidade?')) return;
+    setProcessandoAcao(id);
     try {
-      await escolasService.excluirEscola(id);
+      await escolasService.excluirUnidade(id);
       await carregarEscolas();
       setMenuAtivo(null);
     } catch (err: any) {
-      alert('Erro ao excluir: ' + err.message);
+      alert('Erro: ' + err.message);
+    } finally {
+      setProcessandoAcao(null);
     }
   };
 
-  const toggleMenu = (id: string) => {
-    setMenuAtivo(prev => prev === id ? null : id);
-  };
-
+  const toggleMenu = (id: string) => setMenuAtivo(prev => prev === id ? null : id);
   const fecharMenu = () => setMenuAtivo(null);
 
   return {
     unidades,
     loading,
     salvando,
-    erro,
+    processandoAcao,
     modalAberto,
     menuAtivo,
     busca,

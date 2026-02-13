@@ -1,18 +1,16 @@
-
 import { supabase } from '../supabaseClient';
 import { UnidadeEscolar } from '../tipos';
 
 export const escolasService = {
-  async listarEscolasAtivas(): Promise<UnidadeEscolar[]> {
+  async fetchUnidades(): Promise<UnidadeEscolar[]> {
     const { data, error } = await supabase
       .from('unidades_escolares')
       .select('*')
       .eq('ativa', true)
-      .order('nome');
+      .order('nome', { ascending: true });
 
     if (error) throw new Error(error.message);
     
-    // Mapeia o campo 'ativa' do banco para o campo 'status' do tipo UnidadeEscolar
     return (data || []).map(u => ({
       ...u,
       status: u.ativa ? 'ativo' : 'arquivado',
@@ -20,14 +18,14 @@ export const escolasService = {
     })) as UnidadeEscolar[];
   },
 
-  async criarEscola(payload: { nome: string; gestor_nome: string; codigo_inep?: string }): Promise<UnidadeEscolar> {
+  async handleAddUnidade(payload: { nome: string; gestor_nome: string; codigo_inep?: string }): Promise<UnidadeEscolar> {
     const { data, error } = await supabase
       .from('unidades_escolares')
       .insert([{
-        nome: payload.nome,
-        gestor_nome: payload.gestor_nome,
+        nome: payload.nome.trim(),
+        gestor_nome: payload.gestor_nome.trim(),
         ativa: true,
-        codigo_inep: payload.codigo_inep || null,
+        codigo_inep: payload.codigo_inep?.trim() || null,
         versao_core: '3.1.0',
         alunos_count: 0
       }])
@@ -38,7 +36,7 @@ export const escolasService = {
     return data as UnidadeEscolar;
   },
 
-  async arquivarEscola(id: string): Promise<void> {
+  async arquivarUnidade(id: string): Promise<void> {
     const { error } = await supabase
       .from('unidades_escolares')
       .update({ ativa: false })
@@ -47,7 +45,7 @@ export const escolasService = {
     if (error) throw new Error(error.message);
   },
 
-  async excluirEscola(id: string): Promise<void> {
+  async excluirUnidade(id: string): Promise<void> {
     const { error } = await supabase
       .from('unidades_escolares')
       .delete()

@@ -1,11 +1,9 @@
-
 import { supabase } from '../supabaseClient';
 
 export const gestoresService = {
   /**
-   * Cria o registro institucional do gestor na tabela usuarios.
-   * TODO: Implementar Edge Function com service_role para provisionar 
-   * o Supabase Auth (e-mail/senha) e obter o auth_user_id real.
+   * Cria o perfil institucional na tabela usuarios.
+   * TODO: Implementar Edge Function para provisionar Supabase Auth real.
    */
   async criarGestorVinculado(payload: {
     nome: string;
@@ -16,8 +14,8 @@ export const gestoresService = {
     const { error } = await supabase
       .from('usuarios')
       .insert([{
-        nome: payload.nome,
-        email: payload.email,
+        nome: payload.nome.trim(),
+        email: payload.email.trim().toLowerCase(),
         papel: 'gestor',
         nivel: 5,
         unidade_id: payload.unidade_id,

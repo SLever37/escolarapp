@@ -18,7 +18,6 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
     setCarregando(true);
     setErro(null);
 
-    // MODO DEMONSTRAÇÃO: Forçado se não houver Supabase configurado
     if (!estaConfigurado) {
       SimularLogin();
       return;
@@ -31,7 +30,6 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
       });
 
       if (error) {
-        // Mapeamento Amigável de Erros do Supabase
         switch (error.message) {
           case 'Invalid login credentials':
             setErro('Credenciais inválidas. Verifique seu e-mail e senha institucional.');
@@ -50,7 +48,6 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
         return;
       }
 
-      // Verificação Adicional: Se logou mas não tem perfil na tabela 'usuarios'
       if (data?.user) {
         const { data: perfil, error: erroPerfil } = await supabase
           .from('usuarios')
@@ -64,8 +61,6 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
           setCarregando(false);
           return;
         }
-
-        // Sucesso! O AuthContext cuidará do redirecionamento
       }
       
     } catch (error: any) {
@@ -76,7 +71,6 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
   };
 
   const SimularLogin = () => {
-    // Lógica para modo de demonstração sem backend
     setTimeout(() => {
       if (email.startsWith('master')) aoLogar?.('admin_plataforma');
       else if (email.startsWith('gestor')) aoLogar?.('gestor');
@@ -93,9 +87,9 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
       <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-indigo-600/20 rounded-full blur-[120px]" />
 
       <div className="w-full max-w-md relative z-10">
-        <div className="bg-white p-10 md:p-12 rounded-[3.5rem] shadow-2xl border border-slate-200">
+        <div className="bg-white p-10 md:p-12 rounded-2xl shadow-2xl border border-slate-200">
           <div className="flex flex-col items-center mb-10">
-            <div className="bg-blue-600 p-4 rounded-3xl shadow-xl shadow-blue-200 mb-6">
+            <div className="bg-blue-600 p-4 rounded-2xl shadow-xl shadow-blue-200 mb-6">
               <GraduationCap className="text-white w-10 h-10" />
             </div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tighter text-center leading-none">EscolarApp</h1>
@@ -104,7 +98,7 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
 
           <form onSubmit={lidarComEnvio} className="space-y-6">
             {erro && (
-              <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-start gap-3 text-rose-700 text-xs font-bold animate-in fade-in zoom-in duration-300">
+              <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-start gap-3 text-rose-700 text-xs font-bold animate-in fade-in zoom-in duration-300">
                 <AlertCircle className="shrink-0 text-rose-500" size={18} />
                 <p className="leading-relaxed">{erro}</p>
               </div>
@@ -119,7 +113,7 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setErro(null); }}
                   placeholder="exemplo@escolar.app"
-                  className={`w-full pl-14 pr-6 py-4 bg-slate-50 border ${erro ? 'border-rose-300 ring-rose-500/10' : 'border-slate-100'} rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm font-bold text-slate-800`}
+                  className={`w-full pl-14 pr-6 py-4 bg-slate-50 border ${erro ? 'border-rose-300 ring-rose-500/10' : 'border-slate-100'} rounded-xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm font-bold text-slate-800`}
                   required
                 />
               </div>
@@ -134,7 +128,7 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
                   value={senha}
                   onChange={(e) => { setSenha(e.target.value); setErro(null); }}
                   placeholder="••••••••"
-                  className={`w-full pl-14 pr-6 py-4 bg-slate-50 border ${erro ? 'border-rose-300 ring-rose-500/10' : 'border-slate-100'} rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm font-bold text-slate-800`}
+                  className={`w-full pl-14 pr-6 py-4 bg-slate-50 border ${erro ? 'border-rose-300 ring-rose-500/10' : 'border-slate-100'} rounded-xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm font-bold text-slate-800`}
                   required
                 />
               </div>
@@ -143,7 +137,7 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
             <button 
               type="submit"
               disabled={carregando}
-              className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+              className="w-full bg-blue-600 text-white py-5 rounded-xl font-black text-xs shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70"
             >
               {carregando ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
