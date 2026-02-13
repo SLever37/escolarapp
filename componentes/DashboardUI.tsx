@@ -28,7 +28,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({ title, value, trend, icon, col
   return (
     <div 
       onClick={onClick}
-      className="bg-white p-4 lg:p-6 rounded-xl border border-slate-200 shadow-sm group hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between h-32 lg:h-40"
+      className="bg-white p-4 lg:p-6 rounded-lg border border-slate-200 shadow-sm group hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between h-32 lg:h-40"
     >
       <div className="flex items-center justify-between mb-2 lg:mb-4">
         <div className={`p-2 lg:p-3 rounded-lg ${styles[color]} group-hover:scale-110 transition-transform`}>
@@ -57,7 +57,7 @@ interface AlertItemProps {
 }
 
 export const AlertItem: React.FC<AlertItemProps> = ({ label, desc, time, critical }) => (
-  <div className="flex items-center justify-between p-3 lg:p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-white hover:shadow-md transition-all cursor-pointer group min-w-0">
+  <div className="flex items-center justify-between p-3 lg:p-4 bg-slate-50 border border-slate-100 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer group min-w-0">
     <div className="flex flex-col min-w-0">
        <span className={`text-[8px] lg:text-[10px] font-black uppercase tracking-widest ${critical ? 'text-rose-600' : 'text-slate-400'} truncate`}>
          {label}

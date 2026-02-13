@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, GraduationCap, Globe,
   LogOut, Eye, ShieldCheck, LifeBuoy, MessageSquare, X, Activity,
-  FileText, UserSquare2, School
+  FileText, UserSquare2, School, Database, Users, Network
 } from 'lucide-react';
 import { useAuth } from '../servicos/contexto/AuthContext';
 
@@ -20,16 +19,14 @@ const NavegacaoLateral: React.FC<Props> = ({ aberta, aoFechar }) => {
   if (!usuario) return null;
 
   const LinkMenu = ({ para, icone, label }: any) => {
-    // Comparação de caminho exata para evitar que múltiplos botões fiquem ativos
     const ativo = location.pathname === para;
-    
     return (
       <Link 
         to={para} 
         onClick={() => {
           if (window.innerWidth < 1024) aoFechar();
         }}
-        className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all
           ${ativo ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-blue-100/60 hover:bg-white/5 hover:text-white'}`}
       >
         {React.cloneElement(icone as React.ReactElement<any>, { size: 18 })}
@@ -46,8 +43,8 @@ const NavegacaoLateral: React.FC<Props> = ({ aberta, aoFechar }) => {
     `}>
       <div className="p-6 lg:p-8 border-b border-white/5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4 min-w-0">
-          <div className="bg-blue-600 p-2 rounded-2xl shadow-xl shrink-0">
-            <GraduationCap className="text-white" size={24} />
+          <div className="bg-blue-600 p-2 rounded-lg shadow-xl shrink-0">
+            < GraduationCap className="text-white" size={24} />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl font-black tracking-tighter leading-none truncate">EscolarApp</h1>
@@ -63,13 +60,19 @@ const NavegacaoLateral: React.FC<Props> = ({ aberta, aoFechar }) => {
         {usuario.papel === 'admin_plataforma' && (
           <>
             <div className="space-y-1">
-              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Governança Global</h3>
-              <LinkMenu para="/master" icone={<Globe />} label="Gestão de Escolas" />
-              <LinkMenu para="/master/auditoria" icone={<Eye />} label="Auditoria Forense" />
-              <LinkMenu para="/master/resiliencia" icone={<Activity />} label="Uptime Cluster" />
+              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Dashboard Master</h3>
+              <LinkMenu para="/master" icone={<LayoutDashboard />} label="Painel de Controle" />
             </div>
             <div className="space-y-1">
-              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Suporte</h3>
+              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Governança Global</h3>
+              <LinkMenu para="/master/rede" icone={<Network />} label="Rede Federada" />
+              <LinkMenu para="/master/gestores" icone={<Users />} label="Gestores Master" />
+              <LinkMenu para="/master/resiliencia" icone={<Activity />} label="Uptime Cluster" />
+              <LinkMenu para="/master/integridade" icone={<Database />} label="Integridade DB" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="px-4 mb-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Segurança</h3>
+              <LinkMenu para="/master/auditoria" icone={<Eye />} label="Auditoria Forense" />
               <LinkMenu para="/master/suporte" icone={<LifeBuoy />} label="Chamados Direção" />
             </div>
           </>
@@ -95,7 +98,7 @@ const NavegacaoLateral: React.FC<Props> = ({ aberta, aoFechar }) => {
 
       <div className="p-6 bg-slate-900/50 border-t border-white/5 mt-auto shrink-0">
         <div className="flex items-center gap-4">
-          <img src={`https://ui-avatars.com/api/?name=${usuario.nome}&background=3b82f6&color=fff`} className="w-10 h-10 rounded-xl" alt="Avatar" />
+          <img src={`https://ui-avatars.com/api/?name=${usuario.nome}&background=3b82f6&color=fff`} className="w-10 h-10 rounded-lg" alt="Avatar" />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black truncate">{usuario.nome}</p>
             <p className="text-[9px] text-blue-400 uppercase font-black truncate">Nível de Acesso {usuario.nivel}</p>

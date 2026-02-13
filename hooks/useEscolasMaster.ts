@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { UnidadeEscolar } from '../tipos';
-import { escolasService } from '../services/escolas.service';
-import { gestoresService } from '../services/gestores.service';
+import { escolasService } from '../servicos/escolas.service';
 
 export const useEscolasMaster = () => {
   const [unidades, setUnidades] = useState<UnidadeEscolar[]>([]);
@@ -9,24 +8,23 @@ export const useEscolasMaster = () => {
   const [salvando, setSalvando] = useState(false);
   const [processandoAcao, setProcessandoAcao] = useState<string | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
-  const [menuAtivo, setMenuAtivo] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
 
   const [novaUnidade, setNovaUnidade] = useState({
     nome: '',
-    codigoInep: '',
     gestorNome: '',
     gestorEmail: '',
     gestorSenha: '',
+    codigoInep: '' 
   });
 
   const carregarEscolas = useCallback(async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const data = await escolasService.fetchUnidades();
       setUnidades(data);
     } catch (err: any) {
-      console.error(err.message);
+      console.error('Falha ao sincronizar rede:', err.message);
     } finally {
       setLoading(false);
     }
@@ -39,35 +37,31 @@ export const useEscolasMaster = () => {
   const abrirModal = () => setModalAberto(true);
   const fecharModal = () => {
     setModalAberto(false);
-    setNovaUnidade({ nome: '', codigoInep: '', gestorNome: '', gestorEmail: '', gestorSenha: '' });
+    setNovaUnidade({ nome: '', gestorNome: '', gestorEmail: '', gestorSenha: '', codigoInep: '' });
   };
 
   const atualizarNovaUnidade = (campo: string, valor: string) => {
     setNovaUnidade(prev => ({ ...prev, [campo]: valor }));
   };
 
-  const confirmarCriacaoEscolaEGestor = async () => {
+  const handleSalvarEscola = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (salvando) return;
+    
     setSalvando(true);
     try {
-      const escola = await escolasService.handleAddUnidade({
-        nome: novaUnidade.nome,
-        gestor_nome: novaUnidade.gestorNome,
-        codigo_inep: novaUnidade.codigoInep
+      await escolasService.provisionar({
+        nomeEscola: novaUnidade.nome,
+        nomeGestor: novaUnidade.gestorNome,
+        emailGestor: novaUnidade.gestorEmail,
+        senhaGestor: novaUnidade.gestorSenha,
+        codigoInep: novaUnidade.codigoInep
       });
-
-      await gestoresService.criarGestorVinculado({
-        nome: novaUnidade.gestorNome,
-        email: novaUnidade.gestorEmail,
-        unidade_id: escola.id,
-        unidade_nome: escola.nome
-      });
-
+      
       await carregarEscolas();
       fecharModal();
-      alert(`Provisionamento concluído para: ${escola.nome}`);
     } catch (err: any) {
-      alert('Falha crítica: ' + err.message);
+      alert(`Falha no provisionamento: ${err.message || 'Erro desconhecido'}`);
     } finally {
       setSalvando(false);
     }
@@ -77,11 +71,10 @@ export const useEscolasMaster = () => {
     if (processandoAcao) return;
     setProcessandoAcao(id);
     try {
-      await escolasService.arquivarUnidade(id);
+      await escolasService.atualizarStatus(id, 'arquivado');
       await carregarEscolas();
-      setMenuAtivo(null);
     } catch (err: any) {
-      alert('Erro: ' + err.message);
+      alert('Erro ao arquivar: ' + err.message);
     } finally {
       setProcessandoAcao(null);
     }
@@ -89,21 +82,16 @@ export const useEscolasMaster = () => {
 
   const excluirEscola = async (id: string) => {
     if (processandoAcao) return;
-    if (!confirm('Deseja excluir permanentemente esta unidade?')) return;
     setProcessandoAcao(id);
     try {
-      await escolasService.excluirUnidade(id);
+      await escolasService.excluirDefinitivo(id);
       await carregarEscolas();
-      setMenuAtivo(null);
     } catch (err: any) {
-      alert('Erro: ' + err.message);
+      alert(err.message);
     } finally {
       setProcessandoAcao(null);
     }
   };
-
-  const toggleMenu = (id: string) => setMenuAtivo(prev => prev === id ? null : id);
-  const fecharMenu = () => setMenuAtivo(null);
 
   return {
     unidades,
@@ -111,18 +99,15 @@ export const useEscolasMaster = () => {
     salvando,
     processandoAcao,
     modalAberto,
-    menuAtivo,
     busca,
     novaUnidade,
     setBusca,
-    carregarEscolas,
     abrirModal,
     fecharModal,
+    carregarEscolas,
     atualizarNovaUnidade,
-    confirmarCriacaoEscolaEGestor,
+    handleSalvarEscola,
     arquivarEscola,
-    excluirEscola,
-    toggleMenu,
-    fecharMenu
+    excluirEscola
   };
 };

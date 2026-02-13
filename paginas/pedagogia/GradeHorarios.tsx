@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Save, Trash2, Clock, MapPin, User, CheckCircle2 } from 'lucide-react';
-import { supabase } from '../../servicos/supabase';
+import React, { useState } from 'react';
+import { Calendar, Plus, Save, Trash2 } from 'lucide-react';
+import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../servicos/contexto/AuthContext';
 import { GradeItem } from '../../tipos';
 
@@ -11,7 +11,6 @@ const GradeHorarios = () => {
   const [salvando, setSalvando] = useState(false);
 
   const adicionarLinha = () => {
-    // Proteção contra cliques rápidos durante salvamento
     if (salvando) return;
 
     const novo: GradeItem = {
@@ -39,8 +38,8 @@ const GradeHorarios = () => {
     if (salvando) return;
     setSalvando(true);
     
-    // Simulação de persistência com delay para demonstrar bloqueio de múltiplos cliques
     try {
+      // Aqui integraria com a tabela 'grade_horarios' se existir
       await new Promise(resolve => setTimeout(resolve, 1500));
       alert("Grade de Horários salva com sucesso!");
     } catch (error) {
@@ -64,38 +63,27 @@ const GradeHorarios = () => {
           <button 
             onClick={adicionarLinha} 
             disabled={salvando}
-            className="bg-white border border-slate-200 px-6 py-3 rounded-2xl text-xs font-black uppercase flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-white border border-slate-200 px-6 py-3 rounded-2xl text-xs font-black uppercase flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
           >
             <Plus size={16} /> Adicionar Slot
           </button>
           <button 
             onClick={salvarGrade} 
             disabled={salvando}
-            className="bg-violet-600 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase flex items-center gap-2 shadow-lg shadow-violet-200 hover:bg-violet-700 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            className="bg-violet-600 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase flex items-center gap-2 shadow-lg shadow-violet-200 hover:bg-violet-700 transition-all disabled:opacity-70"
           >
-            {salvando ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Salvando...</span>
-              </div>
-            ) : (
-              <>
-                <Save size={16} /> 
-                <span>Salvar Grade</span>
-              </>
-            )}
+            {salvando ? "Salvando..." : "Salvar Grade"}
           </button>
         </div>
       </header>
 
       <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm overflow-x-auto">
         <div className="mb-8 flex items-center gap-4">
-          <label className="text-[10px] font-black text-slate-400 uppercase">Turma Selecionada:</label>
+          <label className="text-[10px] font-black text-slate-400 uppercase">Turma:</label>
           <select 
             value={turma} 
             onChange={(e) => setTurma(e.target.value)} 
-            disabled={salvando}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none"
           >
             <option>8º Ano B</option>
             <option>9º Ano A</option>
@@ -107,8 +95,7 @@ const GradeHorarios = () => {
           <thead>
             <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               <th className="px-4">Dia</th>
-              <th className="px-4">Início</th>
-              <th className="px-4">Fim</th>
+              <th className="px-4">Horário</th>
               <th className="px-4">Disciplina</th>
               <th className="px-4">Professor</th>
               <th className="px-4">Sala</th>
@@ -117,81 +104,39 @@ const GradeHorarios = () => {
           </thead>
           <tbody>
             {itens.map((item) => (
-              <tr key={item.id} className="bg-slate-50/50 hover:bg-slate-50 transition-colors group">
-                <td className="px-4 py-3 first:rounded-l-2xl">
+              <tr key={item.id} className="bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <td className="px-4 py-3 rounded-l-2xl">
                   <select 
                     value={item.dia_semana} 
                     onChange={(e) => atualizarItem(item.id, 'dia_semana', e.target.value as any)}
-                    disabled={salvando}
                     className="bg-transparent text-sm font-bold outline-none"
                   >
-                    <option>SEG</option><option>TER</option><option>QUA</option><option>QUI</option><option>SEX</option><option>SAB</option>
+                    <option>SEG</option><option>TER</option><option>QUA</option><option>QUI</option><option>SEX</option>
                   </select>
                 </td>
                 <td className="px-4 py-3">
-                  <input 
-                    type="time" 
-                    value={item.horario_inicio} 
-                    onChange={(e) => atualizarItem(item.id, 'horario_inicio', e.target.value)} 
-                    disabled={salvando}
-                    className="bg-transparent text-sm font-bold outline-none" 
-                  />
+                  <div className="flex items-center gap-2">
+                    <input type="time" value={item.horario_inicio} onChange={(e) => atualizarItem(item.id, 'horario_inicio', e.target.value)} className="bg-transparent text-sm font-bold" />
+                    <span>-</span>
+                    <input type="time" value={item.horario_fim} onChange={(e) => atualizarItem(item.id, 'horario_fim', e.target.value)} className="bg-transparent text-sm font-bold" />
+                  </div>
                 </td>
                 <td className="px-4 py-3">
-                  <input 
-                    type="time" 
-                    value={item.horario_fim} 
-                    onChange={(e) => atualizarItem(item.id, 'horario_fim', e.target.value)} 
-                    disabled={salvando}
-                    className="bg-transparent text-sm font-bold outline-none" 
-                  />
+                  <input type="text" placeholder="Disciplina" value={item.disciplina} onChange={(e) => atualizarItem(item.id, 'disciplina', e.target.value)} className="bg-transparent text-sm font-bold w-full" />
                 </td>
                 <td className="px-4 py-3">
-                  <input 
-                    type="text" 
-                    placeholder="Ex: Matemática" 
-                    value={item.disciplina} 
-                    onChange={(e) => atualizarItem(item.id, 'disciplina', e.target.value)} 
-                    disabled={salvando}
-                    className="bg-transparent text-sm font-bold outline-none w-full" 
-                  />
+                  <input type="text" placeholder="Professor" value={item.professor_id} onChange={(e) => atualizarItem(item.id, 'professor_id', e.target.value)} className="bg-transparent text-sm font-bold w-full" />
                 </td>
                 <td className="px-4 py-3">
-                  <input 
-                    type="text" 
-                    placeholder="Nome do Prof." 
-                    value={item.professor_id} 
-                    onChange={(e) => atualizarItem(item.id, 'professor_id', e.target.value)} 
-                    disabled={salvando}
-                    className="bg-transparent text-sm font-bold outline-none w-full" 
-                  />
+                  <input type="text" placeholder="Sala" value={item.sala} onChange={(e) => atualizarItem(item.id, 'sala', e.target.value)} className="bg-transparent text-sm font-bold w-20" />
                 </td>
-                <td className="px-4 py-3">
-                  <input 
-                    type="text" 
-                    placeholder="Sala 01" 
-                    value={item.sala} 
-                    onChange={(e) => atualizarItem(item.id, 'sala', e.target.value)} 
-                    disabled={salvando}
-                    className="bg-transparent text-sm font-bold outline-none w-20" 
-                  />
-                </td>
-                <td className="px-4 py-3 last:rounded-r-2xl text-right">
-                  <button 
-                    onClick={() => removerLinha(item.id)} 
-                    disabled={salvando}
-                    className="p-2 text-slate-300 hover:text-rose-500 transition-colors disabled:opacity-50"
-                  >
+                <td className="px-4 py-3 rounded-r-2xl text-right">
+                  <button onClick={() => removerLinha(item.id)} className="text-slate-300 hover:text-rose-500 transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </td>
               </tr>
             ))}
-            {itens.length === 0 && (
-              <tr>
-                <td colSpan={7} className="py-20 text-center text-slate-400 font-medium italic">Nenhum slot definido para esta grade. Clique em "Adicionar Slot".</td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>

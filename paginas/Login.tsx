@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GraduationCap, ShieldCheck, ArrowRight, Lock, User as IconeUsuario, AlertCircle, HelpCircle } from 'lucide-react';
+import { GraduationCap, ShieldCheck, ArrowRight, Lock, User as IconeUsuario, AlertCircle } from 'lucide-react';
 import { PapelUsuario } from '../tipos';
 import { supabase, estaConfigurado } from '../supabaseClient';
 
@@ -15,17 +15,21 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
 
   const lidarComEnvio = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (carregando) return;
+
     setCarregando(true);
     setErro(null);
 
+    // ✅ Sem DEMO: se não estiver configurado, para aqui.
     if (!estaConfigurado) {
-      SimularLogin();
+      setErro('Supabase não configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY no ambiente do projeto.');
+      setCarregando(false);
       return;
     }
 
     try {
       const { error, data } = await supabase.auth.signInWithPassword({
-        email: email,
+        email,
         password: senha,
       });
 
@@ -38,51 +42,45 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
             setErro('Seu e-mail institucional ainda não foi confirmado.');
             break;
           default:
-            if (error.status === 400) {
-              setErro('Dados de acesso incorretos ou usuário não localizado.');
-            } else {
-              setErro('Falha na comunicação com o servidor de governança.');
-            }
+            setErro('Falha na autenticação: ' + error.message);
         }
         setCarregando(false);
         return;
       }
 
-      if (data?.user) {
-        const { data: perfil, error: erroPerfil } = await supabase
-          .from('usuarios')
-          .select('papel')
-          .eq('auth_user_id', data.user.id)
-          .single();
-
-        if (erroPerfil || !perfil) {
-          await supabase.auth.signOut();
-          setErro('Usuário autenticado, mas não cadastrado na base institucional do app.');
-          setCarregando(false);
-          return;
-        }
+      const userId = data?.user?.id;
+      if (!userId) {
+        setErro('Usuário não retornado pelo Supabase.');
+        setCarregando(false);
+        return;
       }
-      
-    } catch (error: any) {
-      console.error('Erro de login:', error.message);
+
+      // ✅ Busca papel no seu banco institucional
+      const { data: perfil, error: erroPerfil } = await supabase
+        .from('usuarios')
+        .select('papel')
+        .eq('auth_user_id', userId)
+        .single();
+
+      if (erroPerfil || !perfil?.papel) {
+        await supabase.auth.signOut();
+        setErro('Usuário autenticado, mas não cadastrado na base institucional do app.');
+        setCarregando(false);
+        return;
+      }
+
+      // ✅ Sucesso: devolve papel para o App decidir rota
+      aoLogar?.(perfil.papel as PapelUsuario);
+      setCarregando(false);
+    } catch (err: any) {
+      console.error('Erro de login:', err?.message);
       setErro('Ocorreu um erro inesperado ao tentar autenticar.');
       setCarregando(false);
     }
   };
 
-  const SimularLogin = () => {
-    setTimeout(() => {
-      if (email.startsWith('master')) aoLogar?.('admin_plataforma');
-      else if (email.startsWith('gestor')) aoLogar?.('gestor');
-      else if (email.startsWith('prof')) aoLogar?.('professor');
-      else setErro('Usuário de demonstração não localizado. Use prefixos "master", "gestor" ou "prof".');
-      setCarregando(false);
-    }, 800);
-  };
-
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a] p-4 relative overflow-hidden">
-      {/* Luzes de Fundo */}
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-blue-600/20 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-indigo-600/20 rounded-full blur-[120px]" />
 
@@ -108,8 +106,8 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">E-mail Institucional</label>
               <div className="relative">
                 <IconeUsuario className={`absolute left-5 top-1/2 -translate-y-1/2 ${erro ? 'text-rose-400' : 'text-slate-400'}`} size={18} />
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setErro(null); }}
                   placeholder="exemplo@escolar.app"
@@ -123,8 +121,8 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Senha de Acesso</label>
               <div className="relative">
                 <Lock className={`absolute left-5 top-1/2 -translate-y-1/2 ${erro ? 'text-rose-400' : 'text-slate-400'}`} size={18} />
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={senha}
                   onChange={(e) => { setSenha(e.target.value); setErro(null); }}
                   placeholder="••••••••"
@@ -134,7 +132,7 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
               </div>
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={carregando}
               className="w-full bg-blue-600 text-white py-5 rounded-xl font-black text-xs shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70"
@@ -156,7 +154,7 @@ const Login: React.FC<LoginProps> = ({ aoLogar }) => {
               <span className="text-[10px] font-black uppercase tracking-widest">Acesso Criptografado</span>
             </div>
             <p className="text-slate-400 text-[9px] font-bold text-center leading-relaxed">
-              Monitoramento Forense Ativo. <br/>
+              Monitoramento Forense Ativo. <br />
               Protegido por políticas de governança municipal.
             </p>
           </div>

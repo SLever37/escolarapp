@@ -43,7 +43,7 @@ const ModalNovaEscola: React.FC<Props> = ({ aberto, novaUnidade, onChange, onClo
             </div>
             <div className="space-y-5">
               <InputField label="Nome da Escola" placeholder="Ex: Escola Municipal Machado de Assis" required value={novaUnidade.nome} onChange={(v: string) => onChange('nome', v)} />
-              <InputField label="Código INEP" placeholder="8 dígitos oficiais" value={novaUnidade.codigoInep} onChange={(v: string) => onChange('codigoInep', v)} />
+              <InputField label="Código INEP" placeholder="8 dígitos oficiais" value={novaUnidade.codigoInep || ''} onChange={(v: string) => onChange('codigoInep', v)} />
             </div>
           </div>
 
@@ -72,7 +72,7 @@ const ModalNovaEscola: React.FC<Props> = ({ aberto, novaUnidade, onChange, onClo
                 </div>
               ) : (
                 <>
-                  <Globe className="absolute left-6 opacity-10" size={48} />
+                  <Globe className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10 pointer-events-none" size={120} />
                   <span className="relative z-10">CONFIRMAR CADASTRO</span>
                 </>
               )}
