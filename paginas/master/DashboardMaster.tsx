@@ -72,7 +72,7 @@ const DashboardMaster: React.FC = () => {
   return (
     <div className="p-4 md:p-10 space-y-10 bg-[#f8fafc] min-h-full">
       {/* HEADER */}
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+      <header className="max-w-6xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-8 w-full">
         <div>
           <span className="text-[11px] font-black uppercase tracking-[0.4em] opacity-60 text-indigo-600">
             Master Control Core
@@ -88,7 +88,7 @@ const DashboardMaster: React.FC = () => {
         <button
           onClick={() => abrirModal()}
           disabled={loading}
-          className="bg-[#2563eb] text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-wide shadow-lg flex items-center gap-3"
+          className="bg-[#2563eb] text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-wide shadow-lg flex items-center gap-3 shrink-0"
         >
           {loading ? (
             <Loader2 className="animate-spin" size={18} />
@@ -130,7 +130,7 @@ const DashboardMaster: React.FC = () => {
       />
 
       {/* IA VISUAL (APENAS UI) */}
-      <section className="bg-slate-900 rounded-3xl p-8 text-white">
+      <section className="max-w-6xl mx-auto bg-slate-900 rounded-3xl p-8 text-white w-full">
         <div className="flex items-center gap-3 mb-6">
           <Brain className="text-blue-400" size={24} />
           <h3 className="text-lg font-black tracking-tight">

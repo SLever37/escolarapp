@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Users, Activity, Database, ChevronRight } from 'lucide-react';
@@ -17,18 +18,18 @@ const KPICard = ({ label, valor, sub, icon, color, onClick }: any) => {
   return (
     <div 
       onClick={onClick}
-      className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-between h-48 group hover:shadow-xl transition-all cursor-pointer relative"
+      className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm flex flex-col justify-between h-44 lg:h-48 group hover:shadow-xl transition-all cursor-pointer relative"
     >
       <div className="flex items-start justify-between mb-4">
-        <div className={`p-4 rounded-2xl ${styles[color]} group-hover:scale-110 transition-transform duration-500`}>
-          {React.cloneElement(icon as React.ReactElement<any>, { size: 28 })}
+        <div className={`p-3 lg:p-4 rounded-2xl ${styles[color]} group-hover:scale-110 transition-transform duration-500`}>
+          {React.cloneElement(icon as React.ReactElement<any>, { size: 24 })}
         </div>
         <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
       </div>
       <div className="space-y-1">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{label}</p>
-        <p className="text-5xl font-black text-[#0f172a] tracking-tighter leading-none">{valor}</p>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">{sub}</p>
+        <p className="text-[clamp(10px,1vw,12px)] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{label}</p>
+        <p className="text-[clamp(28px,4vw,48px)] font-black text-[#0f172a] tracking-tighter leading-none">{valor}</p>
+        <p className="text-[clamp(10px,1vw,12px)] font-black text-slate-400 uppercase tracking-widest mt-2">{sub}</p>
       </div>
     </div>
   );
@@ -38,7 +39,7 @@ const EscolasKpis: React.FC<Props> = ({ total }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <KPICard 
         label="Rede Federada" 
         valor={total} 
