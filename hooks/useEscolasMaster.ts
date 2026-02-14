@@ -1,5 +1,5 @@
-// Added missing React import to fix namespace error
-import React, { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { UnidadeEscolar } from '../tipos';
 import { escolasService } from '../servicos/escolas.service';
 
@@ -8,15 +8,13 @@ export const useEscolasMaster = () => {
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
+  const [escolaEditando, setEscolaEditando] = useState<UnidadeEscolar | null>(null);
   const [busca, setBusca] = useState('');
   const [processandoAcao, setProcessandoAcao] = useState<string | null>(null);
 
   const [novaUnidade, setNovaUnidade] = useState({
     nome: '',
     codigoInep: '',
-    gestorNome: '',
-    gestorEmail: '',
-    gestorSenha: ''
   });
 
   const carregarEscolas = useCallback(async () => {
@@ -25,7 +23,7 @@ export const useEscolasMaster = () => {
       const data = await escolasService.fetchUnidades();
       setUnidades(data);
     } catch (err: any) {
-      console.error('Falha ao sincronizar rede:', err.message);
+      console.error('Falha ao sincronizar rede:', err?.message ?? err);
     } finally {
       setLoading(false);
     }
@@ -35,35 +33,51 @@ export const useEscolasMaster = () => {
     carregarEscolas();
   }, [carregarEscolas]);
 
-  const abrirModal = () => setModalAberto(true);
+  const abrirModal = (escola?: UnidadeEscolar) => {
+    if (escola) {
+      setEscolaEditando(escola);
+      setNovaUnidade({
+        nome: escola.nome,
+        codigoInep: escola.codigo_inep || '',
+      });
+    } else {
+      setEscolaEditando(null);
+      setNovaUnidade({ nome: '', codigoInep: '' });
+    }
+    setModalAberto(true);
+  };
+
   const fecharModal = () => {
     setModalAberto(false);
-    setNovaUnidade({ nome: '', codigoInep: '', gestorNome: '', gestorEmail: '', gestorSenha: '' });
+    setEscolaEditando(null);
+    setNovaUnidade({ nome: '', codigoInep: '' });
   };
 
   const atualizarNovaUnidade = (campo: string, valor: string) => {
-    setNovaUnidade(prev => ({ ...prev, [campo]: valor }));
+    setNovaUnidade((prev) => ({ ...prev, [campo]: valor }));
   };
 
   const arquivarEscola = async (id: string) => {
+    if (processandoAcao) return;
     setProcessandoAcao(id);
     try {
       await escolasService.atualizarStatus(id, 'arquivado');
       await carregarEscolas();
     } catch (err: any) {
-      alert(`Falha ao arquivar: ${err.message}`);
+      alert(`Falha ao arquivar: ${err?.message ?? err}`);
     } finally {
       setProcessandoAcao(null);
     }
   };
 
   const excluirEscola = async (id: string) => {
+    if (processandoAcao) return;
     setProcessandoAcao(id);
     try {
       await escolasService.excluirDefinitivo(id);
       await carregarEscolas();
     } catch (err: any) {
-      alert(`Falha na exclusão: ${err.message}`);
+      alert(`Falha na exclusão: ${err?.message ?? err}`);
     } finally {
       setProcessandoAcao(null);
     }
@@ -71,26 +85,39 @@ export const useEscolasMaster = () => {
 
   const handleSalvarEscola = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (salvando || !novaUnidade.nome || !novaUnidade.gestorEmail) return;
-    
+    if (salvando) return;
+
+    const nome = (novaUnidade.nome || '').trim();
+    const codigoInep = (novaUnidade.codigoInep || '').trim();
+
+    if (!nome) {
+      alert('Informe o nome da escola.');
+      return;
+    }
+
     setSalvando(true);
     try {
-      // Chama a Edge Function para criação atômica de Escola + Gestor
-      await escolasService.provisionar({
-        nomeEscola: novaUnidade.nome,
-        nomeGestor: novaUnidade.gestorNome,
-        emailGestor: novaUnidade.gestorEmail,
-        senhaGestor: novaUnidade.gestorSenha,
-        codigoInep: novaUnidade.codigoInep || undefined
-      });
+      if (escolaEditando) {
+        await escolasService.atualizarEscola(escolaEditando.id, {
+          nome,
+          codigo_inep: codigoInep || null,
+        });
+      } else {
+        // Fix: Changed from 'provisionar' to 'criarEscola' because the modal only provides school info.
+        // The gestor will be registered later via the invite link provided in the School environment.
+        await escolasService.criarEscola({
+          nome: nome,
+          codigo_inep: codigoInep || null,
+        });
+      }
 
       await carregarEscolas();
       fecharModal();
     } catch (err: any) {
-      alert(`Erro no provisionamento: ${err.message}`);
+      alert(`Erro ao salvar escola: ${err?.message ?? err}`);
     } finally {
-      setSalvando(true); // O componente ModalNovaEscola espera fechar ou resetar. Aqui setamos false após o processo.
       setSalvando(false);
+      await carregarEscolas(); // força sincronização real com banco
     }
   };
 
@@ -99,6 +126,7 @@ export const useEscolasMaster = () => {
     loading,
     salvando,
     modalAberto,
+    escolaEditando,
     busca,
     novaUnidade,
     processandoAcao,
@@ -111,6 +139,6 @@ export const useEscolasMaster = () => {
     arquivarEscola,
     excluirEscola,
     handleSalvarEscola,
-    carregarEscolas
+    carregarEscolas,
   };
 };

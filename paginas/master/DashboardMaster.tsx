@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Globe,
@@ -35,6 +36,7 @@ const DashboardMaster: React.FC = () => {
     loading,
     processandoAcao,
     modalAberto,
+    escolaEditando,
     busca,
     novaUnidade,
     salvando,
@@ -46,29 +48,6 @@ const DashboardMaster: React.FC = () => {
     atualizarNovaUnidade,
     handleSalvarEscola,
   } = useEscolasMaster();
-
-  // 🔎 DEBUG DE SESSÃO / RLS (RODA 1 VEZ)
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: userData, error: eUser } = await supabase.auth.getUser();
-        const uid = userData?.user?.id ?? null;
-
-        const { data: isMaster, error: e1 } = await supabase.rpc('is_master');
-        const { data: myUnidade, error: e2 } = await supabase.rpc('my_unidade_id');
-
-        alert(
-          `DEBUG AUTH\n\nuid: ${uid}\ngetUserErr: ${eUser?.message ?? '-'}\n\nis_master: ${String(
-            isMaster
-          )} ${e1 ? `| err: ${e1.message}` : ''}\n\nmy_unidade_id: ${String(
-            myUnidade
-          )} ${e2 ? `| err: ${e2.message}` : ''}`
-        );
-      } catch (err: any) {
-        alert(`DEBUG ERROR: ${err?.message ?? err}`);
-      }
-    })();
-  }, []);
 
   const handleAbrirAmbienteEscola = (u: UnidadeEscolar) => {
     navigate(`/escola/${u.id}`);
@@ -107,7 +86,7 @@ const DashboardMaster: React.FC = () => {
         </div>
 
         <button
-          onClick={abrirModal}
+          onClick={() => abrirModal()}
           disabled={loading}
           className="bg-[#2563eb] text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-wide shadow-lg flex items-center gap-3"
         >
@@ -132,6 +111,7 @@ const DashboardMaster: React.FC = () => {
         onBuscaChange={setBusca}
         loading={loading}
         processandoAcao={processandoAcao}
+        onEditarEscola={(u) => abrirModal(u)}
         onArquivar={(id) =>
           setModalConfirmacao({
             aberto: true,
@@ -174,6 +154,7 @@ const DashboardMaster: React.FC = () => {
       <ModalNovaEscola
         aberto={modalAberto}
         novaUnidade={novaUnidade}
+        isEdit={!!escolaEditando}
         onChange={atualizarNovaUnidade}
         onClose={fecharModal}
         onSubmit={handleSalvarEscola}

@@ -1,10 +1,13 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { escolasService } from "../../servicos/escolas.service";
+import { usuariosService } from "../../servicos/usuarios.service";
 import { UnidadeEscolar } from "../../tipos";
 import { 
   Building2, Users, ShieldCheck, Link as LinkIcon, 
-  ChevronLeft, Copy, Check, ExternalLink, Globe 
+  ChevronLeft, Copy, Check, ExternalLink, Globe,
+  Edit3, Trash2, X, Save, Loader2, AlertTriangle
 } from "lucide-react";
 
 export default function EscolaAmbiente() {
@@ -13,14 +16,21 @@ export default function EscolaAmbiente() {
   const [escola, setEscola] = useState<UnidadeEscolar | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiado, setCopiado] = useState(false);
+  
+  const [editandoUser, setEditandoUser] = useState<any | null>(null);
+  const [excluindoUser, setExcluindoUser] = useState<any | null>(null);
+  const [processandoAcao, setProcessandoAcao] = useState(false);
+
+  const carregarEscola = async () => {
+    if (id) {
+      const data = await escolasService.fetchUnidadeById(id);
+      setEscola(data);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (id) {
-      escolasService.fetchUnidadeById(id).then(data => {
-        setEscola(data);
-        setLoading(false);
-      });
-    }
+    carregarEscola();
   }, [id]);
 
   const copiarLink = () => {
@@ -28,6 +38,38 @@ export default function EscolaAmbiente() {
     navigator.clipboard.writeText(url);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
+  };
+
+  const handleSalvarEdicaoUsuario = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editandoUser || processandoAcao) return;
+    setProcessandoAcao(true);
+    try {
+      await usuariosService.atualizarUsuario(editandoUser.id, {
+        nome: editandoUser.nome,
+        papel: editandoUser.papel
+      });
+      await carregarEscola();
+      setEditandoUser(null);
+    } catch (err) {
+      alert("Falha ao atualizar usuário.");
+    } finally {
+      setProcessandoAcao(false);
+    }
+  };
+
+  const handleExcluirUsuario = async () => {
+    if (!excluindoUser || processandoAcao) return;
+    setProcessandoAcao(true);
+    try {
+      await usuariosService.excluirUsuario(excluindoUser.id);
+      await carregarEscola();
+      setExcluindoUser(null);
+    } catch (err) {
+      alert("Falha ao remover acesso do usuário.");
+    } finally {
+      setProcessandoAcao(false);
+    }
   };
 
   if (loading) return <div className="p-10 text-slate-400">Carregando instância...</div>;
@@ -99,7 +141,22 @@ export default function EscolaAmbiente() {
                         <p className="text-[10px] font-bold text-slate-400 uppercase">{u.email} • {u.papel}</p>
                      </div>
                   </div>
-                  <span className="text-[9px] font-black px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase">ATIVO</span>
+                  <div className="flex items-center gap-2">
+                     <button 
+                       onClick={() => setEditandoUser(u)}
+                       className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
+                       title="Editar Usuário"
+                     >
+                       <Edit3 size={18} />
+                     </button>
+                     <button 
+                       onClick={() => setExcluindoUser(u)}
+                       className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
+                       title="Excluir Usuário"
+                     >
+                       <Trash2 size={18} />
+                     </button>
+                  </div>
                </div>
              )) : (
                <div className="py-20 text-center border-4 border-dashed border-slate-100 rounded-[2rem]">
@@ -109,6 +166,79 @@ export default function EscolaAmbiente() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Edição de Usuário */}
+      {editandoUser && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
+            <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
+              <h3 className="text-xl font-black uppercase tracking-tighter">Editar Perfil</h3>
+              <button onClick={() => setEditandoUser(null)}><X size={24} /></button>
+            </div>
+            <form onSubmit={handleSalvarEdicaoUsuario} className="p-10 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-4">Nome do Gestor</label>
+                <input 
+                  value={editandoUser.nome} 
+                  onChange={e => setEditandoUser({...editandoUser, nome: e.target.value})}
+                  className="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-4 focus:ring-blue-500/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-4">Nível de Acesso</label>
+                <select 
+                  value={editandoUser.papel} 
+                  onChange={e => setEditandoUser({...editandoUser, papel: e.target.value})}
+                  className="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-4 focus:ring-blue-500/10"
+                >
+                  <option value="gestor">Gestor da Unidade</option>
+                  <option value="pedagogia">Coordenação Pedagógica</option>
+                  <option value="secretaria">Secretaria Escolar</option>
+                </select>
+              </div>
+              <button 
+                type="submit" 
+                disabled={processandoAcao}
+                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3"
+              >
+                {processandoAcao ? <Loader2 className="animate-spin" size={20} /> : <><Save size={18} /> Salvar Alterações</>}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      {excluindoUser && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border border-rose-100">
+            <div className="p-8 bg-rose-50 text-rose-600 border-b border-rose-100 flex items-center justify-between">
+              <h3 className="text-xl font-black uppercase tracking-tighter">Revogar Acesso</h3>
+              <button onClick={() => setExcluindoUser(null)}><X size={24} /></button>
+            </div>
+            <div className="p-10 text-center space-y-6">
+              <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto">
+                <AlertTriangle size={40} />
+              </div>
+              <div className="space-y-2">
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Você está prestes a excluir:</p>
+                <p className="text-xl font-black text-slate-900">{excluindoUser.nome}</p>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed mt-4">Isso removerá permanentemente o acesso deste usuário a esta unidade escolar no core do sistema.</p>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button onClick={() => setExcluindoUser(null)} className="flex-1 py-4 bg-slate-50 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest">Cancelar</button>
+                <button 
+                  onClick={handleExcluirUsuario}
+                  disabled={processandoAcao}
+                  className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-200"
+                >
+                  {processandoAcao ? <Loader2 className="animate-spin mx-auto" size={18} /> : 'Confirmar Exclusão'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

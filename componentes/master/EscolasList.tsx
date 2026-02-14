@@ -1,5 +1,6 @@
+
 import React, { useMemo } from 'react';
-import { Search, Building2, User, CheckCircle2, ExternalLink, Archive, Trash2, Globe, Loader2 } from 'lucide-react';
+import { Search, Building2, User, CheckCircle2, ExternalLink, Archive, Trash2, Globe, Loader2, Edit3 } from 'lucide-react';
 import { UnidadeEscolar } from '../../tipos';
 
 interface Props {
@@ -11,10 +12,11 @@ interface Props {
   onArquivar: (id: string) => void;
   onExcluir: (id: string) => void;
   onAbrirEscola: (u: UnidadeEscolar) => void;
+  onEditarEscola: (u: UnidadeEscolar) => void;
 }
 
 const EscolasList: React.FC<Props> = ({
-  unidades, busca, onBuscaChange, loading, processandoAcao, onArquivar, onExcluir, onAbrirEscola
+  unidades, busca, onBuscaChange, loading, processandoAcao, onArquivar, onExcluir, onAbrirEscola, onEditarEscola
 }) => {
   const filtradas = useMemo(() => {
     const q = busca.toLowerCase();
@@ -56,7 +58,7 @@ const EscolasList: React.FC<Props> = ({
                   <div className="flex flex-wrap items-center gap-3 md:gap-6">
                     <div className="flex items-center gap-1.5">
                       <User size={12} className="text-slate-400" />
-                      <span className="text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[120px]">{e.gestor_nome}</span>
+                      <span className="text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[120px]">{e.gestor_nome || 'Aguardando Gestor'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-[9px] md:text-[11px] font-black text-blue-500 uppercase">INEP: {e.codigo_inep || '—'}</span>
@@ -77,6 +79,14 @@ const EscolasList: React.FC<Props> = ({
                     className="p-3 md:p-4 text-blue-600 bg-white border border-slate-100 rounded-lg shadow-sm hover:bg-blue-600 hover:text-white transition-all"
                   >
                     <ExternalLink size={20} />
+                  </button>
+
+                  <button 
+                    onClick={() => onEditarEscola(e)} 
+                    title="Editar Dados"
+                    className="p-3 md:p-4 text-slate-600 bg-white border border-slate-100 rounded-lg shadow-sm hover:bg-slate-900 hover:text-white transition-all"
+                  >
+                    <Edit3 size={20} />
                   </button>
 
                   <button 

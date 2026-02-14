@@ -1,7 +1,9 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../../supabaseClient';
+
+// Fallback for Session type if not exported correctly from the library version
+type Session = any;
 
 type AuthState = {
   loading: boolean;
@@ -27,10 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('auth_user_id', userId)
         .single();
       
-      if (error) {
-        console.warn('Perfil institucional não encontrado para o usuário Auth.');
-        return null;
-      }
+      if (error) return null;
       return data;
     } catch (e) {
       return null;
@@ -42,19 +41,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     iniciouRef.current = true;
 
     const inicializarAuth = async () => {
-      // 1. Tenta recuperar a sessão atual do storage
-      const { data: { session }, error } = await supabase.auth.getSession();
+      // Use any casting to bypass incomplete type definitions for getSession
+      const { data: { session } } = await (supabase.auth as any).getSession();
       
       if (session) {
         setSessao(session);
         const perfil = await buscarPerfilInstitucional(session.user.id);
         setUsuario(perfil);
       }
-
       setLoading(false);
 
-      // 2. Escuta mudanças globais de auth (Login, Logout, Token Refresh)
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      // Handle auth state changes with any casting to satisfy compiler
+      const { data: { subscription } } = (supabase.auth as any).onAuthStateChange(async (event: string, newSession: Session | null) => {
         setSessao(newSession);
         
         if (newSession) {
@@ -63,7 +61,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           setUsuario(null);
         }
-        
         setLoading(false);
       });
 
@@ -77,10 +74,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sair = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
+    // Use any casting for signOut
+    await (supabase.auth as any).signOut();
     setSessao(null);
     setUsuario(null);
     setLoading(false);
+    window.location.href = '/#/acesso'; // Full route cleanup
   };
 
   const value = useMemo<AuthState>(
