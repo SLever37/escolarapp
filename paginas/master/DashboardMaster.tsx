@@ -1,16 +1,11 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Globe,
   Plus,
   Loader2,
-  Zap,
-  Brain,
-  ChevronRight
+  Brain
 } from 'lucide-react';
 
-import { supabase } from '../../supabaseClient';
 import { useEscolasMaster } from '../../hooks/useEscolasMaster';
 import EscolasKpis from '../../componentes/master/EscolasKpis';
 import EscolasList from '../../componentes/master/EscolasList';
@@ -72,12 +67,12 @@ const DashboardMaster: React.FC = () => {
   return (
     <div className="p-4 md:p-10 space-y-10 bg-[#f8fafc] min-h-full">
       {/* HEADER */}
-      <header className="max-w-6xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-8 w-full">
+      <header className="max-w-6xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6 lg:gap-8 w-full">
         <div>
           <span className="text-[11px] font-black uppercase tracking-[0.4em] opacity-60 text-indigo-600">
             Master Control Core
           </span>
-          <h2 className="text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight">
             Gestão de Rede
           </h2>
           <p className="text-slate-500 text-sm">
@@ -112,41 +107,53 @@ const DashboardMaster: React.FC = () => {
         loading={loading}
         processandoAcao={processandoAcao}
         onEditarEscola={(u) => abrirModal(u)}
-        onArquivar={(id) =>
+        onArquivar={(id) => {
+          const unidade = unidades.find((u) => u.id === id);
+          if (!unidade) return;
           setModalConfirmacao({
             aberto: true,
             tipo: 'arquivar',
-            unidade: unidades.find((u) => u.id === id) || null,
-          })
-        }
-        onExcluir={(id) =>
+            unidade,
+          });
+        }}
+        onExcluir={(id) => {
+          const unidade = unidades.find((u) => u.id === id);
+          if (!unidade) return;
           setModalConfirmacao({
             aberto: true,
             tipo: 'excluir',
-            unidade: unidades.find((u) => u.id === id) || null,
-          })
-        }
+            unidade,
+          });
+        }}
         onAbrirEscola={handleAbrirAmbienteEscola}
       />
 
       {/* IA VISUAL (APENAS UI) */}
-      <section className="max-w-6xl mx-auto bg-slate-900 rounded-3xl p-8 text-white w-full">
-        <div className="flex items-center gap-3 mb-6">
-          <Brain className="text-blue-400" size={24} />
-          <h3 className="text-lg font-black tracking-tight">
-            Core Intelligence
-          </h3>
-        </div>
+      <section className="max-w-6xl mx-auto bg-slate-900 rounded-3xl p-6 md:p-8 text-white w-full overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
 
-        <p className="text-slate-300 text-sm mb-6">
-          Monitoramento de integridade da rede ativa.
-        </p>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Brain className="text-blue-400" size={20} />
+              <h3 className="text-base md:text-lg font-black tracking-tight">
+                Core Intelligence
+              </h3>
+            </div>
 
-        <div className="flex gap-4">
-          <div className="bg-white/5 p-4 rounded-xl">
-            <p className="text-xs uppercase opacity-60">Instâncias</p>
-            <p className="text-xl font-black">{unidades.length}</p>
+            <p className="text-slate-300 text-xs md:text-sm max-w-xl leading-relaxed">
+              Monitoramento de integridade da rede ativa.
+            </p>
           </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full md:w-auto">
+            <div className="bg-white/5 p-4 rounded-xl text-center">
+              <p className="text-[10px] uppercase opacity-60">Instâncias</p>
+              <p className="text-lg md:text-xl font-black break-words">
+                {unidades.length}
+              </p>
+            </div>
+          </div>
+
         </div>
       </section>
 

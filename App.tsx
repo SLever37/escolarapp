@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './servicos/contexto/AuthContext';
@@ -23,7 +24,7 @@ import EscolaAmbiente from './paginas/escola/EscolaAmbiente';
 import PainelGestor from './paginas/gestao/PainelGestor';
 import SuporteMaster from './paginas/gestao/SuporteMaster';
 import MensageiroCentral from './paginas/MensageiroCentral';
-import GradeHorarios from './paginas/pedagogia/GradeHorarios';
+import GradeHorarios from './paginas/pedagogia/GradeDeHorarios';
 import SecretariaLegal from './paginas/secretaria/SecretariaLegal';
 import DiarioProfessor from './paginas/professor/DiarioProfessor';
 import PortariaAcesso from './paginas/portaria/PortariaAcesso';
@@ -82,7 +83,6 @@ const App: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#f8fafc]">
           <Routes>
-            {/* Se o usuário já estiver logado e tentar acessar /acesso, manda para a home */}
             <Route 
               path="/acesso" 
               element={usuario ? <Navigate to="/" replace /> : <Login />} 
