@@ -1,4 +1,4 @@
-
+// src/componentes/master/ModalNovaEscola.tsx
 import React from 'react';
 import { X, Building2, Globe, Loader2, ShieldCheck, Edit3 } from 'lucide-react';
 
@@ -43,10 +43,10 @@ const ModalNovaEscola: React.FC<Props> = ({
         <div className="p-8 md:p-10 bg-slate-900 text-white flex items-center justify-between border-b border-white/10">
           <div className="space-y-1">
             <h3 className="text-2xl font-black uppercase tracking-tighter leading-none">
-              {isEdit ? 'Editar Instância' : 'Provisionar Unidade'}
+              {isEdit ? 'Editar Instância' : 'Nova Escola'}
             </h3>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.25em] mt-2">
-              {isEdit ? 'Ajustar metadados da escola selecionada' : 'Acesso do Gestor via Convite Interno'}
+              {isEdit ? 'Ajustar metadados da escola selecionada' : 'Criar escola na rede municipal'}
             </p>
           </div>
           <button
@@ -63,7 +63,11 @@ const ModalNovaEscola: React.FC<Props> = ({
         >
           <div className="space-y-6">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              {isEdit ? <Edit3 className="text-blue-600" size={18} /> : <Building2 className="text-blue-600" size={18} />}
+              {isEdit ? (
+                <Edit3 className="text-blue-600" size={18} />
+              ) : (
+                <Building2 className="text-blue-600" size={18} />
+              )}
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 Identificação Institucional
               </h4>
@@ -71,12 +75,13 @@ const ModalNovaEscola: React.FC<Props> = ({
 
             <div className="space-y-6">
               <InputField
-                label="Nome da Instituição"
-                placeholder="Ex: Escola Municipal Osmarina Melo"
+                label="Nome da Escola"
+                placeholder="Ex: EM Osmarina Melo de Oliveira"
                 required
                 value={novaUnidade.nome}
                 onChange={(v: string) => onChange('nome', v)}
               />
+
               <InputField
                 label="Código INEP (8 dígitos)"
                 placeholder="Opcional"
@@ -95,7 +100,7 @@ const ModalNovaEscola: React.FC<Props> = ({
               {loading ? (
                 <div className="flex items-center gap-3 relative z-10">
                   <Loader2 className="animate-spin" size={20} />
-                  <span>{isEdit ? 'Atualizando...' : 'Provisionando...'}</span>
+                  <span>{isEdit ? 'Atualizando...' : 'Salvando...'}</span>
                 </div>
               ) : (
                 <>
@@ -103,7 +108,7 @@ const ModalNovaEscola: React.FC<Props> = ({
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10 pointer-events-none"
                     size={110}
                   />
-                  <span className="relative z-10">{isEdit ? 'Salvar Alterações' : 'Confirmar Instância'}</span>
+                  <span className="relative z-10">{isEdit ? 'Salvar Alterações' : 'Criar Escola'}</span>
                 </>
               )}
             </button>
@@ -111,7 +116,7 @@ const ModalNovaEscola: React.FC<Props> = ({
             <div className="flex items-center justify-center gap-2 mt-8 text-slate-400">
               <ShieldCheck size={16} />
               <p className="text-[10px] font-black uppercase tracking-[0.2em]">
-                Protocolo de Auditoria Master Ativo
+                Auditoria Master Ativa
               </p>
             </div>
           </div>

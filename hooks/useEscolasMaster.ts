@@ -1,5 +1,6 @@
 
-import { useState, useEffect, useCallback } from 'react';
+// src/hooks/useEscolasMaster.ts
+import React, { useState, useEffect, useCallback } from 'react';
 import { UnidadeEscolar } from '../tipos';
 import { escolasService } from '../servicos/escolas.service';
 
@@ -8,13 +9,20 @@ export const useEscolasMaster = () => {
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
-  const [escolaEditando, setEscolaEditando] = useState<UnidadeEscolar | null>(null);
   const [busca, setBusca] = useState('');
   const [processandoAcao, setProcessandoAcao] = useState<string | null>(null);
 
+  // Adicionado estado para controlar a escola que está sendo editada
+  const [escolaEditando, setEscolaEditando] = useState<UnidadeEscolar | null>(null);
+
+  // ✅ agora o modal é só escola + INEP
   const [novaUnidade, setNovaUnidade] = useState({
     nome: '',
     codigoInep: '',
+    // mantém campos antigos sem usar (evita quebrar UI antiga se existir)
+    gestorNome: '',
+    gestorEmail: '',
+    gestorSenha: '',
   });
 
   const carregarEscolas = useCallback(async () => {
@@ -33,16 +41,26 @@ export const useEscolasMaster = () => {
     carregarEscolas();
   }, [carregarEscolas]);
 
+  // Corrigido: abrirModal agora aceita uma unidade opcional para edição
   const abrirModal = (escola?: UnidadeEscolar) => {
     if (escola) {
       setEscolaEditando(escola);
       setNovaUnidade({
         nome: escola.nome,
         codigoInep: escola.codigo_inep || '',
+        gestorNome: '',
+        gestorEmail: '',
+        gestorSenha: '',
       });
     } else {
       setEscolaEditando(null);
-      setNovaUnidade({ nome: '', codigoInep: '' });
+      setNovaUnidade({
+        nome: '',
+        codigoInep: '',
+        gestorNome: '',
+        gestorEmail: '',
+        gestorSenha: '',
+      });
     }
     setModalAberto(true);
   };
@@ -50,39 +68,20 @@ export const useEscolasMaster = () => {
   const fecharModal = () => {
     setModalAberto(false);
     setEscolaEditando(null);
-    setNovaUnidade({ nome: '', codigoInep: '' });
+    setNovaUnidade({
+      nome: '',
+      codigoInep: '',
+      gestorNome: '',
+      gestorEmail: '',
+      gestorSenha: '',
+    });
   };
 
   const atualizarNovaUnidade = (campo: string, valor: string) => {
     setNovaUnidade((prev) => ({ ...prev, [campo]: valor }));
   };
 
-  const arquivarEscola = async (id: string) => {
-    if (processandoAcao) return;
-    setProcessandoAcao(id);
-    try {
-      await escolasService.atualizarStatus(id, 'arquivado');
-      await carregarEscolas();
-    } catch (err: any) {
-      alert(`Falha ao arquivar: ${err?.message ?? err}`);
-    } finally {
-      setProcessandoAcao(null);
-    }
-  };
-
-  const excluirEscola = async (id: string) => {
-    if (processandoAcao) return;
-    setProcessandoAcao(id);
-    try {
-      await escolasService.excluirDefinitivo(id);
-      await carregarEscolas();
-    } catch (err: any) {
-      alert(`Falha na exclusão: ${err?.message ?? err}`);
-    } finally {
-      setProcessandoAcao(null);
-    }
-  };
-
+  // ✅ Suporta criação ou atualização dependendo do estado escolaEditando
   const handleSalvarEscola = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (salvando) return;
@@ -98,26 +97,53 @@ export const useEscolasMaster = () => {
     setSalvando(true);
     try {
       if (escolaEditando) {
+        // Modo Edição
         await escolasService.atualizarEscola(escolaEditando.id, {
-          nome,
-          codigo_inep: codigoInep || null,
+          nomeEscola: nome,
+          codigoInep: codigoInep || undefined,
         });
       } else {
-        // Fix: Changed from 'provisionar' to 'criarEscola' because the modal only provides school info.
-        // The gestor will be registered later via the invite link provided in the School environment.
+        // Modo Criação
         await escolasService.criarEscola({
-          nome: nome,
-          codigo_inep: codigoInep || null,
+          nomeEscola: nome,
+          codigoInep: codigoInep || undefined,
         });
       }
 
-      await carregarEscolas();
       fecharModal();
+      await carregarEscolas();
     } catch (err: any) {
       alert(`Erro ao salvar escola: ${err?.message ?? err}`);
     } finally {
       setSalvando(false);
-      await carregarEscolas(); // força sincronização real com banco
+    }
+  };
+
+  const arquivarEscola = async (id: string) => {
+    if (processandoAcao) return;
+    setProcessandoAcao(id);
+
+    try {
+      await escolasService.atualizarStatus(id, 'arquivado');
+      await carregarEscolas();
+    } catch (err: any) {
+      alert(`Falha ao arquivar: ${err?.message ?? err}`);
+    } finally {
+      setProcessandoAcao(null);
+    }
+  };
+
+  const excluirEscola = async (id: string) => {
+    if (processandoAcao) return;
+    setProcessandoAcao(id);
+
+    try {
+      await escolasService.excluirDefinitivo(id);
+      await carregarEscolas();
+    } catch (err: any) {
+      alert(`Falha na exclusão: ${err?.message ?? err}`);
+    } finally {
+      setProcessandoAcao(null);
     }
   };
 
@@ -126,19 +152,17 @@ export const useEscolasMaster = () => {
     loading,
     salvando,
     modalAberto,
-    escolaEditando,
+    escolaEditando, // Adicionado para corrigir erro de desestruturação no DashboardMaster
     busca,
     novaUnidade,
     processandoAcao,
     setBusca,
     abrirModal,
     fecharModal,
-    setModalAberto,
-    setNovaUnidade,
     atualizarNovaUnidade,
+    handleSalvarEscola,
     arquivarEscola,
     excluirEscola,
-    handleSalvarEscola,
     carregarEscolas,
   };
 };

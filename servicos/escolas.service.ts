@@ -1,89 +1,133 @@
 
+// src/servicos/escolas.service.ts
 import { supabase } from '../supabaseClient';
-import { UnidadeEscolar } from '../tipos';
+import type { UnidadeEscolar } from '../tipos';
 
 type CriarEscolaPayload = {
-  nome: string;
-  codigo_inep: string | null;
+  nomeEscola: string;
+  codigoInep?: string;
 };
+
+type ProvisionarPayload = {
+  nomeEscola: string;
+  nomeGestor?: string;
+  emailGestor?: string;
+  senhaGestor?: string;
+  codigoInep?: string;
+};
+
+function msgErro(error: any): string {
+  return (
+    error?.message ||
+    error?.error_description ||
+    error?.details ||
+    JSON.stringify(error) ||
+    'Erro desconhecido'
+  );
+}
 
 export const escolasService = {
   async fetchUnidades(): Promise<UnidadeEscolar[]> {
     const { data, error } = await supabase
       .from('unidades_escolares')
-      .select(`
-        *,
-        usuarios(count)
-      `)
+      .select('*')
       .neq('status', 'arquivado')
       .order('nome', { ascending: true });
 
     if (error) throw new Error(error.message);
-    
-    return (data || []).map(u => ({
-      ...u,
-      alunos_count: (u as any).usuarios?.[0]?.count || 0 
-    })) as UnidadeEscolar[];
+    return (data || []) as UnidadeEscolar[];
   },
 
-  async provisionar(payload: { 
-    nomeEscola: string, 
-    nomeGestor: string, 
-    emailGestor: string, 
-    senhaGestor: string, 
-    codigoInep?: string 
-  }) {
-    console.log("INICIANDO PROVISIONAMENTO:", payload);
+  // ✅ ESSENCIAL: usado ao abrir /escola/:id
+  async fetchUnidadeById(id: string): Promise<UnidadeEscolar | null> {
+    const { data, error } = await supabase
+      .from('unidades_escolares')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
 
-    const { data, error } = await supabase.functions.invoke(
-      'provisionar_escola_gestor',
-      { body: payload }
-    );
-
-    console.log("RESPOSTA EDGE:", { data, error });
-
-    if (error) {
-      throw new Error(error.message || "Erro ao chamar Edge Function");
-    }
-
-    if (!data) {
-      throw new Error("Edge Function não retornou dados.");
-    }
-
-    return data;
+    if (error) throw new Error(error.message);
+    return (data || null) as UnidadeEscolar | null;
   },
 
-  async criarEscola(payload: CriarEscolaPayload): Promise<UnidadeEscolar> {
+  // ✅ MASTER (web/mobile): cria APENAS a escola (sem Edge Function)
+  async criarEscola(payload: CriarEscolaPayload): Promise<{ id: string }> {
+    const nome = (payload.nomeEscola || '').trim();
+    const codigoInep = (payload.codigoInep || '').trim();
+
+    if (!nome) throw new Error('Informe o nome da escola.');
+
+    // opcional: valida INEP (se preencher)
+    if (codigoInep && !/^\d{8}$/.test(codigoInep)) {
+      throw new Error('Código INEP inválido. Use 8 dígitos.');
+    }
+
     const { data, error } = await supabase
       .from('unidades_escolares')
       .insert([
         {
-          nome: payload.nome,
-          codigo_inep: payload.codigo_inep,
+          nome,
+          codigo_inep: codigoInep || null,
           status: 'ativo',
-          versao_core: '3.0.1'
         },
       ])
-      .select('*')
+      .select('id')
       .single();
 
     if (error) throw new Error(error.message);
-    return data as UnidadeEscolar;
+    return { id: data.id as string };
   },
 
-  async atualizarEscola(id: string, payload: Partial<CriarEscolaPayload>): Promise<void> {
+  /**
+   * Atualiza os dados de uma unidade escolar existente.
+   */
+  async atualizarEscola(id: string, payload: CriarEscolaPayload): Promise<void> {
+    const nome = (payload.nomeEscola || '').trim();
+    const codigoInep = (payload.codigoInep || '').trim();
+
+    if (!nome) throw new Error('Informe o nome da escola.');
+
     const { error } = await supabase
       .from('unidades_escolares')
-      .update(payload)
+      .update({
+        nome,
+        codigo_inep: codigoInep || null,
+      })
       .eq('id', id);
 
     if (error) throw new Error(error.message);
   },
 
-  async atualizarStatus(
-    id: string,
-    status: 'ativo' | 'arquivado' | 'suspenso'
-  ): Promise<void> {
+  // (Opcional) buscar por INEP (para tela de cadastro do gestor por código)
+  async fetchUnidadeByInep(codigoInep: string): Promise<UnidadeEscolar | null> {
+    const { data, error } = await supabase
+      .from('unidades_escolares')
+      .select('*')
+      .eq('codigo_inep', codigoInep)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return (data || null) as UnidadeEscolar | null;
+  },
+
+  // ⚠️ Mantido para uso futuro (server-side). NÃO usar no Master no AI Studio.
+  async provisionar(payload: ProvisionarPayload): Promise<any> {
+    const { data, error } = await supabase.functions.invoke('provisionar_escola_gestor', {
+      body: {
+        nomeEscola: payload.nomeEscola?.trim(),
+        nomeGestor: payload.nomeGestor?.trim(),
+        emailGestor: payload.emailGestor?.trim(),
+        senhaGestor: payload.senhaGestor,
+        codigoInep: payload.codigoInep?.trim() || undefined,
+      },
+    });
+
+    if (error) throw new Error(msgErro(error));
+    if (!data?.ok && data?.ok !== undefined) throw new Error(data?.error || 'Provisionamento falhou.');
+    return data;
+  },
+
+  async atualizarStatus(id: string, status: 'ativo' | 'arquivado'): Promise<void> {
     const { error } = await supabase
       .from('unidades_escolares')
       .update({ status })
@@ -99,16 +143,5 @@ export const escolasService = {
       .eq('id', id);
 
     if (error) throw new Error(error.message);
-  },
-
-  async fetchUnidadeById(id: string): Promise<UnidadeEscolar | null> {
-    const { data, error } = await supabase
-      .from('unidades_escolares')
-      .select('*, usuarios(*)')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) throw new Error(error.message);
-    return (data || null) as UnidadeEscolar | null;
   },
 };

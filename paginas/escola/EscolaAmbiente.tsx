@@ -1,36 +1,62 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { escolasService } from "../../servicos/escolas.service";
 import { usuariosService } from "../../servicos/usuarios.service";
 import { UnidadeEscolar } from "../../tipos";
 import { 
-  Building2, Users, ShieldCheck, Link as LinkIcon, 
+  Building2, Users, ShieldCheck, 
   ChevronLeft, Copy, Check, ExternalLink, Globe,
-  Edit3, Trash2, X, Save, Loader2, AlertTriangle
+  Edit3, Trash2, X, Save, Loader2, AlertTriangle,
+  ArrowRightLeft, UserX, KeyRound
 } from "lucide-react";
+import { ModalTransferirGestor } from "../../componentes/master/ModalTransferirGestor";
+import ModalConfirmacao from "../../componentes/ModalConfirmacao";
 
 export default function EscolaAmbiente() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [escola, setEscola] = useState<UnidadeEscolar | null>(null);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiado, setCopiado] = useState(false);
   
+  const [abaAtiva, setAbaAtiva] = useState<'todos' | 'gestores'>('todos');
   const [editandoUser, setEditandoUser] = useState<any | null>(null);
-  const [excluindoUser, setExcluindoUser] = useState<any | null>(null);
+  const [modalTransferir, setModalTransferir] = useState<{aberto: boolean, gestor: any | null}>({
+    aberto: false,
+    gestor: null
+  });
+  const [modalConfirma, setModalConfirma] = useState<{
+    aberto: boolean, 
+    tipo: 'exonerar' | 'excluir' | 'reset', 
+    usuario: any | null
+  }>({
+    aberto: false,
+    tipo: 'exonerar',
+    usuario: null
+  });
   const [processandoAcao, setProcessandoAcao] = useState(false);
 
-  const carregarEscola = async () => {
+  const carregarDados = async () => {
     if (id) {
-      const data = await escolasService.fetchUnidadeById(id);
-      setEscola(data);
-      setLoading(false);
+      try {
+        const [escolaData, usuariosData] = await Promise.all([
+          escolasService.fetchUnidadeById(id),
+          usuariosService.fetchUsuariosPorUnidade(id)
+        ]);
+        setEscola(escolaData);
+        setUsuarios(usuariosData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    carregarEscola();
+    carregarDados();
   }, [id]);
 
   const copiarLink = () => {
@@ -47,9 +73,10 @@ export default function EscolaAmbiente() {
     try {
       await usuariosService.atualizarUsuario(editandoUser.id, {
         nome: editandoUser.nome,
-        papel: editandoUser.papel
+        papel: editandoUser.papel,
+        ativo: editandoUser.ativo
       });
-      await carregarEscola();
+      await carregarDados();
       setEditandoUser(null);
     } catch (err) {
       alert("Falha ao atualizar usuário.");
@@ -58,21 +85,40 @@ export default function EscolaAmbiente() {
     }
   };
 
-  const handleExcluirUsuario = async () => {
-    if (!excluindoUser || processandoAcao) return;
+  const handleAcaoConfirmada = async () => {
+    const { tipo, usuario } = modalConfirma;
+    if (!usuario || processandoAcao) return;
     setProcessandoAcao(true);
     try {
-      await usuariosService.excluirUsuario(excluindoUser.id);
-      await carregarEscola();
-      setExcluindoUser(null);
+      if (tipo === 'exonerar') {
+        await usuariosService.exonerarUsuario(usuario.id);
+      } else if (tipo === 'excluir') {
+        await usuariosService.excluirUsuario(usuario.id);
+      } else if (tipo === 'reset') {
+        await usuariosService.resetarSenhaGestor(usuario.email);
+        alert('E-mail de reset enviado.');
+      }
+      await carregarDados();
+      setModalConfirma({ ...modalConfirma, aberto: false });
     } catch (err) {
-      alert("Falha ao remover acesso do usuário.");
+      alert("Erro na operação: " + err);
     } finally {
       setProcessandoAcao(false);
     }
   };
 
-  if (loading) return <div className="p-10 text-slate-400">Carregando instância...</div>;
+  const usuariosFiltrados = useMemo(() => {
+    if (abaAtiva === 'gestores') return usuarios.filter(u => u.papel === 'gestor');
+    return usuarios;
+  }, [usuarios, abaAtiva]);
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center h-full p-20 gap-4">
+      <Loader2 className="animate-spin text-blue-600" size={48} />
+      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sincronizando Instância Escola...</p>
+    </div>
+  );
+  
   if (!escola) return <div className="p-10 text-rose-500">Unidade não encontrada.</div>;
 
   return (
@@ -120,86 +166,131 @@ export default function EscolaAmbiente() {
                 <Users className="text-blue-600" size={24} />
                 <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">Pessoas Vinculadas</h4>
              </div>
-             <p className="text-4xl font-black text-slate-900 tracking-tighter">{(escola as any).usuarios?.length || 0}</p>
+             <p className="text-4xl font-black text-slate-900 tracking-tighter">{usuarios.length}</p>
              <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Usuários com acesso ativo</p>
           </div>
         </div>
 
-        <div className="lg:col-span-8 bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-8">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-6">
-             <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter">Diretório de Acessos</h3>
-             <ShieldCheck size={20} className="text-slate-300" />
+        <div className="lg:col-span-8 bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-8 min-h-[500px] flex flex-col">
+          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-6 gap-6">
+             <div className="flex gap-1 bg-slate-50 p-1 rounded-2xl border border-slate-200">
+                <button 
+                  onClick={() => setAbaAtiva('todos')}
+                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'todos' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-700'}`}
+                >
+                  Todos Usuários
+                </button>
+                <button 
+                  onClick={() => setAbaAtiva('gestores')}
+                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'gestores' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-700'}`}
+                >
+                  Somente Gestores
+                </button>
+             </div>
+             <ShieldCheck size={20} className="text-slate-300 hidden md:block" />
           </div>
           
-          <div className="space-y-4">
-             {(escola as any).usuarios?.length > 0 ? (escola as any).usuarios.map((u: any) => (
+          <div className="space-y-4 flex-1">
+             {usuariosFiltrados.length > 0 ? usuariosFiltrados.map((u: any) => (
                <div key={u.id} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between group hover:bg-white hover:shadow-lg transition-all">
                   <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black text-blue-600 uppercase">{u.nome[0]}</div>
+                     <div className={`w-12 h-12 rounded-xl border flex items-center justify-center font-black uppercase text-lg group-hover:bg-blue-600 group-hover:text-white transition-all ${u.ativo ? 'bg-white border-slate-200 text-blue-600' : 'bg-rose-50 border-rose-100 text-rose-400'}`}>
+                        {u.nome[0]}
+                     </div>
                      <div>
-                        <p className="text-sm font-black text-slate-800">{u.nome}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">{u.email} • {u.papel}</p>
+                        <div className="flex items-center gap-2">
+                           <p className="text-sm font-black text-slate-800">{u.nome}</p>
+                           {!u.ativo && <span className="bg-rose-50 text-rose-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-rose-100 uppercase">Inativo</span>}
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{u.email} • {u.papel}</p>
                      </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                     {u.papel === 'gestor' && (
+                        <button 
+                          onClick={() => setModalTransferir({ aberto: true, gestor: u })}
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                          title="Transferir para outra unidade"
+                        >
+                          <ArrowRightLeft size={18} />
+                        </button>
+                     )}
+                     <button 
+                       onClick={() => setModalConfirma({ aberto: true, tipo: 'reset', usuario: u })}
+                       className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                       title="Resetar Senha"
+                     >
+                       <KeyRound size={18} />
+                     </button>
                      <button 
                        onClick={() => setEditandoUser(u)}
-                       className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
-                       title="Editar Usuário"
+                       className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"
+                       title="Editar Dados"
                      >
                        <Edit3 size={18} />
                      </button>
                      <button 
-                       onClick={() => setExcluindoUser(u)}
-                       className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
-                       title="Excluir Usuário"
+                       onClick={() => setModalConfirma({ aberto: true, tipo: 'exonerar', usuario: u })}
+                       className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                       title="Exonerar / Inativar"
                      >
-                       <Trash2 size={18} />
+                       <UserX size={18} />
                      </button>
                   </div>
                </div>
              )) : (
-               <div className="py-20 text-center border-4 border-dashed border-slate-100 rounded-[2rem]">
-                  <p className="text-slate-300 font-black uppercase tracking-widest text-xs">Aguardando cadastro do gestor...</p>
+               <div className="py-20 text-center border-4 border-dashed border-slate-50 rounded-[2rem]">
+                  <p className="text-slate-300 font-black uppercase tracking-widest text-xs">Nenhum usuário encontrado nesta visualização</p>
                </div>
              )}
           </div>
         </div>
       </div>
 
-      {/* Modal de Edição de Usuário */}
+      {/* Modais de Edição */}
       {editandoUser && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
             <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
               <h3 className="text-xl font-black uppercase tracking-tighter">Editar Perfil</h3>
-              <button onClick={() => setEditandoUser(null)}><X size={24} /></button>
+              <button onClick={() => setEditandoUser(null)} className="p-2 hover:bg-white/10 rounded-xl"><X size={24} /></button>
             </div>
             <form onSubmit={handleSalvarEdicaoUsuario} className="p-10 space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-4">Nome do Gestor</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Nome Completo</label>
                 <input 
                   value={editandoUser.nome} 
                   onChange={e => setEditandoUser({...editandoUser, nome: e.target.value})}
-                  className="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-4 focus:ring-blue-500/10"
+                  className="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-4">Nível de Acesso</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-4 tracking-widest">Papel Institucional</label>
                 <select 
                   value={editandoUser.papel} 
                   onChange={e => setEditandoUser({...editandoUser, papel: e.target.value})}
-                  className="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-4 focus:ring-blue-500/10"
+                  className="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                 >
                   <option value="gestor">Gestor da Unidade</option>
                   <option value="pedagogia">Coordenação Pedagógica</option>
                   <option value="secretaria">Secretaria Escolar</option>
+                  <option value="professor">Professor</option>
+                  <option value="portaria">Portaria</option>
                 </select>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <input 
+                  type="checkbox" 
+                  checked={editandoUser.ativo} 
+                  onChange={e => setEditandoUser({...editandoUser, ativo: e.target.checked})}
+                  className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                />
+                <span className="text-xs font-black uppercase text-slate-700 tracking-widest">Usuário Ativo no Sistema</span>
               </div>
               <button 
                 type="submit" 
                 disabled={processandoAcao}
-                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3"
+                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all flex items-center justify-center gap-3"
               >
                 {processandoAcao ? <Loader2 className="animate-spin" size={20} /> : <><Save size={18} /> Salvar Alterações</>}
               </button>
@@ -208,37 +299,29 @@ export default function EscolaAmbiente() {
         </div>
       )}
 
-      {/* Modal de Confirmação de Exclusão */}
-      {excluindoUser && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border border-rose-100">
-            <div className="p-8 bg-rose-50 text-rose-600 border-b border-rose-100 flex items-center justify-between">
-              <h3 className="text-xl font-black uppercase tracking-tighter">Revogar Acesso</h3>
-              <button onClick={() => setExcluindoUser(null)}><X size={24} /></button>
-            </div>
-            <div className="p-10 text-center space-y-6">
-              <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto">
-                <AlertTriangle size={40} />
-              </div>
-              <div className="space-y-2">
-                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Você está prestes a excluir:</p>
-                <p className="text-xl font-black text-slate-900">{excluindoUser.nome}</p>
-                <p className="text-xs text-slate-400 font-medium leading-relaxed mt-4">Isso removerá permanentemente o acesso deste usuário a esta unidade escolar no core do sistema.</p>
-              </div>
-              <div className="flex gap-4 pt-4">
-                <button onClick={() => setExcluindoUser(null)} className="flex-1 py-4 bg-slate-50 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest">Cancelar</button>
-                <button 
-                  onClick={handleExcluirUsuario}
-                  disabled={processandoAcao}
-                  className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-200"
-                >
-                  {processandoAcao ? <Loader2 className="animate-spin mx-auto" size={18} /> : 'Confirmar Exclusão'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ModalTransferirGestor 
+        aberto={modalTransferir.aberto}
+        onClose={() => setModalTransferir({ aberto: false, gestor: null })}
+        onConfirmar={async (unidId, nomeUnid) => {
+          await usuariosService.transferirUsuarioDeUnidade(modalTransferir.gestor.id, unidId, nomeUnid);
+          await carregarDados();
+        }}
+        gestorNome={modalTransferir.gestor?.nome || ''}
+        unidadeAtualId={id}
+      />
+
+      <ModalConfirmacao 
+        aberto={modalConfirma.aberto}
+        tipo={modalConfirma.tipo === 'excluir' ? 'excluir' : 'arquivar'}
+        titulo={
+          modalConfirma.tipo === 'exonerar' ? 'Confirmar Exoneração' :
+          modalConfirma.tipo === 'reset' ? 'Confirmar Reset de Senha' : 'Excluir Usuário'
+        }
+        itemNome={modalConfirma.usuario?.nome || ''}
+        onConfirmar={handleAcaoConfirmada}
+        onFechar={() => setModalConfirma({ ...modalConfirma, aberto: false })}
+        loading={processandoAcao}
+      />
     </div>
   );
 }
