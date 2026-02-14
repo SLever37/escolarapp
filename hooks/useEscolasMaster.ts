@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+// Added missing React import to fix namespace error
+import React, { useState, useEffect, useCallback } from 'react';
 import { UnidadeEscolar } from '../tipos';
 import { escolasService } from '../servicos/escolas.service';
 
@@ -6,16 +7,16 @@ export const useEscolasMaster = () => {
   const [unidades, setUnidades] = useState<UnidadeEscolar[]>([]);
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [processandoAcao, setProcessandoAcao] = useState<string | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [busca, setBusca] = useState('');
+  const [processandoAcao, setProcessandoAcao] = useState<string | null>(null);
 
   const [novaUnidade, setNovaUnidade] = useState({
     nome: '',
+    codigoInep: '',
     gestorNome: '',
     gestorEmail: '',
-    gestorSenha: '',
-    codigoInep: '' 
+    gestorSenha: ''
   });
 
   const carregarEscolas = useCallback(async () => {
@@ -37,59 +38,59 @@ export const useEscolasMaster = () => {
   const abrirModal = () => setModalAberto(true);
   const fecharModal = () => {
     setModalAberto(false);
-    setNovaUnidade({ nome: '', gestorNome: '', gestorEmail: '', gestorSenha: '', codigoInep: '' });
+    setNovaUnidade({ nome: '', codigoInep: '', gestorNome: '', gestorEmail: '', gestorSenha: '' });
   };
 
   const atualizarNovaUnidade = (campo: string, valor: string) => {
     setNovaUnidade(prev => ({ ...prev, [campo]: valor }));
   };
 
-  const handleSalvarEscola = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (salvando) return;
-    
-    setSalvando(true);
-    try {
-      await escolasService.provisionar({
-        nomeEscola: novaUnidade.nome,
-        nomeGestor: novaUnidade.gestorNome,
-        emailGestor: novaUnidade.gestorEmail,
-        senhaGestor: novaUnidade.gestorSenha,
-        codigoInep: novaUnidade.codigoInep
-      });
-      
-      await carregarEscolas();
-      fecharModal();
-    } catch (err: any) {
-      alert(`Falha no provisionamento: ${err.message || 'Erro desconhecido'}`);
-    } finally {
-      setSalvando(false);
-    }
-  };
-
   const arquivarEscola = async (id: string) => {
-    if (processandoAcao) return;
     setProcessandoAcao(id);
     try {
       await escolasService.atualizarStatus(id, 'arquivado');
       await carregarEscolas();
     } catch (err: any) {
-      alert('Erro ao arquivar: ' + err.message);
+      alert(`Falha ao arquivar: ${err.message}`);
     } finally {
       setProcessandoAcao(null);
     }
   };
 
   const excluirEscola = async (id: string) => {
-    if (processandoAcao) return;
     setProcessandoAcao(id);
     try {
       await escolasService.excluirDefinitivo(id);
       await carregarEscolas();
     } catch (err: any) {
-      alert(err.message);
+      alert(`Falha na exclusão: ${err.message}`);
     } finally {
       setProcessandoAcao(null);
+    }
+  };
+
+  const handleSalvarEscola = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (salvando || !novaUnidade.nome || !novaUnidade.gestorEmail) return;
+    
+    setSalvando(true);
+    try {
+      // Chama a Edge Function para criação atômica de Escola + Gestor
+      await escolasService.provisionar({
+        nomeEscola: novaUnidade.nome,
+        nomeGestor: novaUnidade.gestorNome,
+        emailGestor: novaUnidade.gestorEmail,
+        senhaGestor: novaUnidade.gestorSenha,
+        codigoInep: novaUnidade.codigoInep || undefined
+      });
+
+      await carregarEscolas();
+      fecharModal();
+    } catch (err: any) {
+      alert(`Erro no provisionamento: ${err.message}`);
+    } finally {
+      setSalvando(true); // O componente ModalNovaEscola espera fechar ou resetar. Aqui setamos false após o processo.
+      setSalvando(false);
     }
   };
 
@@ -97,17 +98,19 @@ export const useEscolasMaster = () => {
     unidades,
     loading,
     salvando,
-    processandoAcao,
     modalAberto,
     busca,
     novaUnidade,
+    processandoAcao,
     setBusca,
     abrirModal,
     fecharModal,
-    carregarEscolas,
+    setModalAberto,
+    setNovaUnidade,
     atualizarNovaUnidade,
-    handleSalvarEscola,
     arquivarEscola,
-    excluirEscola
+    excluirEscola,
+    handleSalvarEscola,
+    carregarEscolas
   };
 };
