@@ -1,3 +1,4 @@
+// src/paginas/auth/CadastroGestor.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
@@ -34,7 +35,7 @@ export default function CadastroGestor() {
   const [erro, setErro] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
 
-  // Carregar escola se vier ID na URL
+  // ✅ Carregar escola se vier ID na URL (via RPC para não bater no RLS)
   useEffect(() => {
     if (!unidadeIdUrl) return;
 
@@ -43,23 +44,24 @@ export default function CadastroGestor() {
       setErro(null);
 
       try {
-        const { data, error } = await supabase
-          .from('unidades_escolares')
-          .select('id, nome, codigo_inep, status')
-          .eq('id', unidadeIdUrl)
-          .maybeSingle();
+        if (!inepUrl) {
+          setErro('Convite inválido: código INEP ausente na URL.');
+          return;
+        }
+
+        const { data, error } = await supabase.rpc('get_unidade_por_convite', {
+          p_unidade_id: unidadeIdUrl,
+          p_inep: String(inepUrl),
+        });
 
         if (error) throw error;
 
-        if (data) {
-          if (data.status === 'ativo') {
-            setEscolaPrevia(data);
-            if (data.codigo_inep) setCodigoInep(String(data.codigo_inep));
-          } else {
-            setErro(
-              `A escola "${data.nome}" foi localizada via convite, mas está com status "${data.status}". Apenas escolas ativas podem receber novos gestores.`
-            );
-          }
+        const escola = Array.isArray(data) ? data[0] : data;
+
+        if (escola?.id) {
+          // RPC já garante status = ativo e INEP confere
+          setEscolaPrevia({ ...escola, status: 'ativo' });
+          if (escola.codigo_inep) setCodigoInep(String(escola.codigo_inep));
         } else {
           setErro('O link de convite utilizado é inválido ou a escola não existe mais no sistema.');
         }
@@ -72,7 +74,7 @@ export default function CadastroGestor() {
     };
 
     buscarEscola();
-  }, [unidadeIdUrl]);
+  }, [unidadeIdUrl, inepUrl]); // ✅ dependências corretas
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +96,7 @@ export default function CadastroGestor() {
       let escolaId = escolaPrevia?.id as string | undefined;
       let escolaNome = escolaPrevia?.nome as string | undefined;
 
-      // 1) Se não tiver escola prévia pelo link, buscar pelo INEP
+      // 1) Se não tiver escola prévia pelo link, buscar pelo INEP (OBS: pode ser bloqueado por RLS se sua policy não permitir)
       if (!escolaId) {
         if (!inep) {
           throw new Error('Informe o Código INEP ou utilize um link de convite válido.');
@@ -146,12 +148,12 @@ export default function CadastroGestor() {
       if (eAuth) throw new Error(eAuth.message);
 
       const authUserId = signUpData?.user?.id;
+
       if (!authUserId) {
         throw new Error('Cadastro criado, mas precisa confirmar e-mail para concluir.');
       }
 
       // 3) Criar registro institucional em public.usuarios
-      // ✅ FIX: remover campo inexistente `unidade`
       const { error: eUsuario } = await supabase.from('usuarios').insert({
         auth_user_id: authUserId,
         nome: nomeTrim,
@@ -172,7 +174,6 @@ export default function CadastroGestor() {
         .eq('id', escolaId);
 
       if (eUpdateEscola) {
-        // não quebra o fluxo principal, mas registra
         console.warn('Falha ao atualizar gestor_nome:', eUpdateEscola.message);
       }
 
@@ -200,9 +201,11 @@ export default function CadastroGestor() {
             <div className="bg-blue-600 p-4 rounded-2xl shadow-xl shadow-blue-500/20 mb-6">
               <GraduationCap className="text-white w-8 h-8" />
             </div>
+
             <h1 className="text-2xl font-black text-slate-900 tracking-tighter text-center leading-none">
               Cadastro de Gestor
             </h1>
+
             <p className="text-[10px] text-slate-400 mt-3 text-center font-black uppercase tracking-widest max-w-[240px]">
               Vínculo Institucional
             </p>
@@ -229,10 +232,7 @@ export default function CadastroGestor() {
               </label>
 
               <div className="relative">
-                <Building2
-                  className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"
-                  size={16}
-                />
+                <Building2 className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
 
                 {loadingEscola ? (
                   <div className="w-full pl-14 pr-6 py-3 rounded-xl border border-slate-100 bg-slate-50 flex items-center gap-2">
@@ -264,6 +264,7 @@ export default function CadastroGestor() {
               <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 ml-4">
                 Nome completo
               </label>
+
               <div className="relative">
                 <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                 <input
@@ -280,6 +281,7 @@ export default function CadastroGestor() {
               <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 ml-4">
                 E-mail Institucional
               </label>
+
               <div className="relative">
                 <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                 <input
@@ -297,6 +299,7 @@ export default function CadastroGestor() {
               <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 ml-4">
                 Senha de Acesso
               </label>
+
               <div className="relative">
                 <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                 <input
