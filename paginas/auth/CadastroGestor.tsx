@@ -132,8 +132,10 @@ export default function CadastroGestor() {
         throw new Error('Falha ao determinar a escola do gestor. Tente novamente.');
       }
 
-      // 2) Criar usuário no Auth (self-signup)
-      const { data: signUpData, error: eAuth } = await (supabase.auth as any).signUp({
+      // 2) Gerenciar usuário no Auth (signUp ou signIn se já existir)
+      let authUserId: string | null = null;
+
+      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
         email: emailTrim,
         password: senha,
         options: {
@@ -145,16 +147,32 @@ export default function CadastroGestor() {
         },
       });
 
-      if (eAuth) throw new Error(eAuth.message);
+      if (signUpErr) {
+        const msg = signUpErr.message.toLowerCase();
+        if (msg.includes('already registered') || msg.includes('already been registered')) {
+          // Tenta logar para obter o ID
+          const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+            email: emailTrim,
+            password: senha,
+          });
 
-      const authUserId = signUpData?.user?.id;
-
-      if (!authUserId) {
-        throw new Error('Cadastro criado, mas precisa confirmar e-mail para concluir.');
+          if (signInErr) {
+            throw new Error('Conta já existe. Verifique a senha e tente novamente.');
+          }
+          authUserId = signInData.user?.id ?? null;
+        } else {
+          throw new Error(signUpErr.message);
+        }
+      } else {
+        authUserId = signUpData.user?.id ?? null;
       }
 
-      // 3) Criar registro institucional em public.usuarios
-      const { error: eUsuario } = await supabase.from('usuarios').insert({
+      if (!authUserId) {
+        throw new Error('Não foi possível obter o usuário autenticado. Tente novamente.');
+      }
+
+      // 3) Criar ou atualizar registro institucional em public.usuarios (UPSERT)
+      const payloadUsuario = {
         auth_user_id: authUserId,
         nome: nomeTrim,
         email: emailTrim,
@@ -163,7 +181,11 @@ export default function CadastroGestor() {
         unidade_id: escolaId,
         ativo: true,
         delegacoes: [],
-      });
+      };
+
+      const { error: eUsuario } = await supabase
+        .from('usuarios')
+        .upsert(payloadUsuario, { onConflict: 'auth_user_id' });
 
       if (eUsuario) throw new Error(eUsuario.message);
 
@@ -180,7 +202,7 @@ export default function CadastroGestor() {
       setOk(`Gestor vinculado à escola: ${escolaNome}. Agora faça login.`);
 
       // Desloga para garantir fluxo limpo e redireciona
-      await (supabase.auth as any).signOut();
+      await supabase.auth.signOut();
       setTimeout(() => navigate('/acesso'), 2000);
     } catch (err: any) {
       setErro(err?.message || 'Falha no cadastro.');
